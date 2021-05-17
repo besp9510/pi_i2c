@@ -1,0 +1,6 @@
+# Ignore build files:
+*.d
+*.o
+
+# Vscode
+**/.vscode/
