@@ -8,6 +8,7 @@
 #include "config.h"                   // I2C timing and variable defs
 #include "clock_stretching.h"         // Support clock stretching
 #include <pi_lw_gpio.h>               // GPIO library for the Pi
+#include <pi_microsleep_hard.h>       // Hard microsleep function for the Pi
 
 // Detect if bus is locked up **assuming the expected condition is IDLE**
 // and attempt to recover depending on the error
