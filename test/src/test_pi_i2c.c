@@ -292,8 +292,8 @@ void test_get_configs_i2c(void) {
     struct pi_i2c_configs configs = get_configs_i2c();
 
     printf("test_get_configs_i2c() has returned the following:\n");
-    printf("scl_t_low_sleep_nsec = %ld\n", configs.scl_t_low_sleep_nsec);
-    printf("scl_t_high_sleep_nsec = %ld\n", configs.scl_t_high_sleep_nsec);
+    printf("scl_t_low_sleep_us = %ld\n", configs.scl_t_low_sleep_us);
+    printf("scl_t_high_sleep_us = %ld\n", configs.scl_t_high_sleep_us);
     printf("scl_actual_clock_frequency_hz = %.3f\n",
            configs.scl_actual_clock_frequency_hz);
     printf("Test complete\n");

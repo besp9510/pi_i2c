@@ -49,8 +49,8 @@ struct pi_i2c_statistics {
 };
 
 struct pi_i2c_configs {
-    long scl_t_low_sleep_nsec;
-    long scl_t_high_sleep_nsec;
+    long scl_t_low_sleep_us;
+    long scl_t_high_sleep_us;
     float scl_actual_clock_frequency_hz;
 };
 

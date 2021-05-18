@@ -62,6 +62,7 @@
 #include "detect_recover_bus.h"       // Detect and recover I2C bus
 #include "clock_stretching.h"         // Support clock stretching
 #include <pi_lw_gpio.h>               // GPIO library for the Pi
+#include <pi_microsleep_hard.h>       // Hard microsleep function for the Pi
 
 // Read N number of bytes from the specified register address of a slave
 int read_i2c(int slave_address, int register_address, int *data, int n_bytes) {
@@ -325,14 +326,14 @@ int reset_i2c(void) {
         gpio_set_mode(GPIO_OUTPUT, scl_gpio_pin);
 
         // Previously ended a clock cycle so we must elapse SCL low period:
-        nanosleep(&scl_t_low_sleep, NULL);
+        microsleep_hard(scl_t_low_sleep_us);
 
         // Transmit bit by setting SCL line:
         gpio_set_mode(GPIO_INPUT, scl_gpio_pin);
 
         // Keep SCL set while SCL high period time elapses. Not waiting may
         // violate I2C timing requirements.
-        nanosleep(&scl_t_high_sleep, NULL);
+        microsleep_hard(scl_t_high_sleep_us);
 
         // Adhere to UM10204 I2C-bus specification 3.1.9:
         if ((ret = support_clock_stretching()) < 0) {
@@ -356,8 +357,8 @@ struct pi_i2c_statistics get_statistics_i2c(void) {
 // Return internal configuration values
 struct pi_i2c_configs get_configs_i2c(void) {
     struct pi_i2c_configs configs = {
-        .scl_t_low_sleep_nsec = scl_t_low_sleep.tv_nsec,
-        .scl_t_high_sleep_nsec = scl_t_high_sleep.tv_nsec,
+        .scl_t_low_sleep_us = scl_t_low_sleep_us,
+        .scl_t_high_sleep_us = scl_t_high_sleep_us,
         .scl_actual_clock_frequency_hz = scl_actual_clock_frequency_hz
     };
 

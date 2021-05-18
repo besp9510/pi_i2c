@@ -7,6 +7,7 @@
 #include "config.h"                   // I2C timing and variable defs
 #include "detect_recover_bus.h"       // Detect and recover I2C bus
 #include <pi_lw_gpio.h>               // GPIO library for the Pi
+#include <pi_microsleep_hard.h>       // Hard microsleep function for the Pi
 
 // Write I2C START condition to bus (bus busy)
 int write_start_condition_to_bus(void) {
@@ -23,7 +24,7 @@ int write_start_condition_to_bus(void) {
 
     // Wait setup time required for START condition condition otherwise risk
     // slaves not understanding:
-    nanosleep(&min_t_hdsta_sleep, NULL);
+    microsleep_hard(min_t_hdsta_sleep_us);
 
     // Set SDA to complete STOP:
     // (Bus is now busy)
@@ -34,7 +35,7 @@ int write_start_condition_to_bus(void) {
 
     // Must elapse SCL low period before allowing another function
     // to use the bus:
-    nanosleep(&scl_t_low_sleep, NULL);
+    microsleep_hard(scl_t_low_sleep_us);
 
     // Check if START condition was actually written to the bus:
     if (gpio_read_level(sda_gpio_pin) && gpio_read_level(scl_gpio_pin)) {
@@ -66,7 +67,7 @@ int write_stop_condition_to_bus(void) {
 
     // Wait setup time required for STOP condition otherwise
     // risk slaves not understanding:
-    nanosleep(&min_t_susto_sleep, NULL);
+    microsleep_hard(min_t_susto_sleep_us);
 
     // Set SDA to complete STOP condition:
     // (Bus is now idle)
@@ -74,7 +75,7 @@ int write_stop_condition_to_bus(void) {
 
     // Wait minimum time before a new transmission can start in case another
     // I2C message queued:
-    nanosleep(&min_t_buf_sleep, NULL);
+    microsleep_hard(min_t_buf_sleep_us);
 
     // Detect if bus is not IDLE and attempt to recover the bus:
     if ((ret = detect_recover_bus()) < 0) {

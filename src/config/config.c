@@ -7,42 +7,19 @@
 #include "write_conditions_to_bus.h"  // I2C START and STOP function protos
 #include "config.h"                   // I2C timing and variable defs
 #include <pi_lw_gpio.h>               // GPIO library for the Pi
+#include <pi_microsleep_hard.h>       // Hard microsleep function for the Pi
 
 // I2C timing compliance nanosleep timespec definitions
-struct timespec min_t_hdsta_sleep = {
-    .tv_sec = 0,
-    .tv_nsec = MIN_T_HDSTA * 1e9
-};
+int min_t_hdsta_sleep_us = CEILING(MIN_T_HDSTA * 1e6);
 
-struct timespec min_t_susto_sleep = {
-    .tv_sec = 0,
-    .tv_nsec = MIN_T_SUSTO * 1e9
-};
+int min_t_susto_sleep_us = CEILING(MIN_T_SUSTO * 1e6);
 
-struct timespec min_t_buf_sleep = {
-    .tv_sec = 0,
-    .tv_nsec = MIN_T_BUF * 1e9
-};
+int min_t_buf_sleep_us = CEILING(MIN_T_BUF * 1e6);
 
-struct timespec scl_t_low_sleep = {
-    .tv_sec = 0,
-    .tv_nsec = 0
-};
+int scl_t_low_sleep_us = 0;
+int scl_t_high_sleep_us = 0;
 
-struct timespec scl_t_high_sleep = {
-    .tv_sec = 0,
-    .tv_nsec = 0
-};
-
-struct timespec clock_stretching_sleep = {
-    .tv_sec = 0,
-    .tv_nsec = (CLOCK_STRETCHING_TIMEOUT_US * 1e3) / 10
-};
-
-struct timespec scl_response_time = {
-    .tv_sec = 0,
-    .tv_nsec = SCL_RESPONSE_TIME * 1e9
-};
+int scl_response_time_us = CEILING(SCL_RESPONSE_TIME);
 
 // Config global variables defined and initialized to 0:
 int config_i2c_flag = 0;
@@ -75,7 +52,11 @@ struct pi_i2c_statistics statistics = {
 // Configure pi_i2c
 int config_i2c(int sda, int scl, int speed_grade) {
     // Definitions:
-    int scl_clock_period_ns;
+    int scl_clock_period_us;
+
+    // Setup microsleep function to eliminate additional over head at first
+    // sleep function call:
+    setup_microsleep_hard();
 
     // Set data and clock GPIO pin mappings:
     sda_gpio_pin = sda;
@@ -85,8 +66,8 @@ int config_i2c(int sda, int scl, int speed_grade) {
     write_stop_condition_to_bus();
 
     // Set clock frequency given input speed grade:
-    scl_clock_frequency_hz = speed_grade; // (bits/second = clock frequency in Hz)
-    scl_clock_period_ns = ((1.0 / scl_clock_frequency_hz) * 1e9);
+    scl_clock_frequency_hz = speed_grade; // (clock frequency in Hz = bps)
+    scl_clock_period_us = CEILING((1.0 / scl_clock_frequency_hz) * 1e6);
 
     // Assign SCL low and high period sleep times unevenly. The time it takes
     // for a GPIO pin to change state is ignored until that time can be
@@ -126,11 +107,11 @@ int config_i2c(int sda, int scl, int speed_grade) {
     // Choosing 66.6% of period for T_LOW and 33.3% of period for T_HIGH as
     // these ratios will work for all speed grades. Rounding required so actual
     // frequency achieved is not guaranteed to equal input:
-    scl_t_low_sleep.tv_nsec = ((2.0 / 3.0) * scl_clock_period_ns);
-    scl_t_high_sleep.tv_nsec = ((1.0 / 3.0) * scl_clock_period_ns);
+    scl_t_low_sleep_us = CEILING((2.0 / 3.0) * scl_clock_period_us);
+    scl_t_high_sleep_us = CEILING((1.0 / 3.0) * scl_clock_period_us);
 
     scl_actual_clock_frequency_hz = (1.0 / \
-        ((scl_t_low_sleep.tv_nsec + scl_t_high_sleep.tv_nsec) * 1e-9));
+        ((scl_t_low_sleep_us + scl_t_high_sleep_us) * 1e-6));
 
     // Set configuration flag to allow functionality:
     config_i2c_flag = 1;

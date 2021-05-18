@@ -8,6 +8,7 @@
 #include "detect_recover_bus.h"       // Detect and recover I2C bus
 #include "clock_stretching.h"         // Support clock stretching
 #include <pi_lw_gpio.h>               // GPIO library for the Pi
+#include <pi_microsleep_hard.h>       // Hard microsleep function for the Pi
 
 int read_byte_from_bus(int ack_flag) {
     // Definitions:
@@ -29,7 +30,7 @@ int read_byte_from_bus(int ack_flag) {
 
         // Keep SCL set while SCL high period time elapses. Not waiting may
         // violate I2C timing requirements.
-        nanosleep(&scl_t_high_sleep, NULL);
+        microsleep_hard(scl_t_high_sleep_us);
 
         // Here we can read bit from the bus:
         sda_level = gpio_read_level(sda_gpio_pin);
@@ -42,7 +43,7 @@ int read_byte_from_bus(int ack_flag) {
 
         // Keep SCL cleared while SCL low period time elapses. Not waiting may
         // violate I2C timing requirements.
-        nanosleep(&scl_t_low_sleep, NULL);
+        microsleep_hard(scl_t_low_sleep_us);
     }
 
     // If the SDA line has not yet been released then we assume that
@@ -66,14 +67,14 @@ int read_byte_from_bus(int ack_flag) {
 
     // Keep SCL set while SCL high period time elapses. Not waiting may
     // violate I2C timing requirements.
-    nanosleep(&scl_t_high_sleep, NULL);
+    microsleep_hard(scl_t_high_sleep_us);
 
     // End clock pulse by clearing SCL:
     gpio_set_mode(GPIO_OUTPUT, scl_gpio_pin);
 
     // Keep SCL cleared while SCL low period time elapses. Not waiting may
     // violate I2C timing requirements.
-    nanosleep(&scl_t_low_sleep, NULL);
+    microsleep_hard(scl_t_low_sleep_us);
 
     // If we have NACK'd, now clear SDA line so that we can generate a STOP
     // condition:

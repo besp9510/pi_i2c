@@ -1,0 +1,77 @@
+# Configuration:
+LIBDIR := -L/usr/local/lib/
+ 
+# Compiler:
+CC := gcc
+
+# Target binary:
+TARGET := test_pi_i2c
+
+# Root directories:
+ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+# Directories:
+SRCDIR     := $(ROOT)/src
+INCDIR     := $(ROOT)/include
+BUILDDIR   := $(ROOT)/obj
+TARGETDIR  := $(ROOT)/bin
+
+# Extensions:
+SRCEXT := c
+DEPEXT := d
+OBJEXT := o
+
+# Flags, Libraries and Includes:
+CFLAGS   := -Wall -O2 -g # C flags
+LDFLAGS  :=
+
+LIB     := -lpimicrosleephard -lpilwgpio -lpii2c
+INC     := -I$(INCDIR)
+INCDEP  := -I$(INCDIR)
+
+MACRO := $(DEBUG_LOG)
+
+# Find source and object files:
+SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
+OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,\
+	$(SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+
+# -------------------------------------------------------------------------- #
+# Rules (DO NOT EDIT)
+# -------------------------------------------------------------------------- #
+
+# Default make:
+source: $(TARGET)
+
+# Make the directories
+directories:
+	@mkdir -p $(TARGETDIR)
+	@mkdir -p $(BUILDDIR)
+
+# Clean target and object files:
+clean:
+	@$(RM) -rf $(BUILDDIR)/* $(TARGETDIR)/*
+
+# Pull in dependency info for *existing* .o files:
+-include $(OBJECTS:.$(OBJEXT)=.$(DEPEXT))
+
+# Link:
+$(TARGET): $(OBJECTS)
+	@mkdir -p $(TARGETDIR)
+	$(CC) -o $(TARGETDIR)/$(TARGET) $(LIBDIR) $^ $(LIB) $(CFLAGS) $(LDFLAGS)
+
+# Compile:
+$(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INC) -Wall $(MACRO) -c -o $@ $<
+	@$(CC) $(CFLAGS) $(INCDEP) -MM $(SRCDIR)/$*.$(SRCEXT) > \
+		$(BUILDDIR)/$*.$(DEPEXT)
+	@cp -f $(BUILDDIR)/$*.$(DEPEXT) $(BUILDDIR)/$*.$(DEPEXT).tmp
+	@sed -e 's|.*:|$(BUILDDIR)/$*.$(OBJEXT):|' \
+		< $(BUILDDIR)/$*.$(DEPEXT).tmp > $(BUILDDIR)/$*.$(DEPEXT)
+	@sed -e 's/.*://' -e 's/\\$$//' < $(BUILDDIR)/$*.$(DEPEXT).tmp \
+		| fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >> $(BUILDDIR)/$*.$(DEPEXT)
+	@rm -f $(BUILDDIR)/$*.$(DEPEXT).tmp
+
+# Non-file targets:
+.PHONY: all remake clean library

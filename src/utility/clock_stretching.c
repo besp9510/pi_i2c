@@ -7,14 +7,16 @@
 #include "config.h"                   // I2C timing and variable defs
 #include "detect_recover_bus.h"       // Detect and recover I2C bus
 #include <pi_lw_gpio.h>               // GPIO library for the Pi
+#include <pi_microsleep_hard.h>       // Hard microsleep function for the Pi
 
 // Support UM10204 I2C-bus specification 3.1.9 before breaking another device
 int support_clock_stretching(void) {
     // Elapsed time in micro seconds:
     int clock_stretching_elapsed_us = 0;
+    int clock_stretching_sleep_us = CLOCK_STRETCHING_TIMEOUT_US / 10;
 
     // Implement a wait to avoid a false positive SCL stuck low:
-    nanosleep(&scl_response_time, NULL);
+    microsleep_hard(scl_response_time_us);
 
     // Check if SCL line has actually gone high after it was released; if not,
     // slave has requested clock stretching:
@@ -27,7 +29,7 @@ int support_clock_stretching(void) {
         // high, then slave is ready for master to continue.
         while ((clock_stretching_elapsed_us < CLOCK_STRETCHING_TIMEOUT_US)) {
             // Wait for slave to release SCL line:
-            nanosleep(&clock_stretching_sleep, NULL);
+            microsleep_hard(clock_stretching_sleep_us);
 
             // If SCL line has been released then master can continue:
             if (gpio_read_level(scl_gpio_pin)) {
@@ -35,8 +37,7 @@ int support_clock_stretching(void) {
             }
 
             // Continue clock stretching:
-            clock_stretching_elapsed_us += (clock_stretching_sleep.tv_nsec
-                                            / 1e3);
+            clock_stretching_elapsed_us += (clock_stretching_sleep_us);
         }
 
         // Slave has not responded within the timeout!

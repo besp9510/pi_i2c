@@ -29,14 +29,14 @@ int detect_recover_bus(void) {
             gpio_set_mode(GPIO_OUTPUT, scl_gpio_pin);
 
             // Previously ended a clock cycle so we must elapse SCL low period:
-            nanosleep(&scl_t_low_sleep, NULL);
+            microsleep_hard(scl_t_low_sleep_us);
 
             // Transmit bit by setting SCL line:
             gpio_set_mode(GPIO_INPUT, scl_gpio_pin);
 
             // Keep SCL set while SCL high period time elapses. Not waiting may
             // violate I2C timing requirements.
-            nanosleep(&scl_t_high_sleep, NULL);
+            microsleep_hard(scl_t_high_sleep_us);
 
             // Adhere to UM10204 I2C-bus specification 3.1.9:
             if ((ret = support_clock_stretching()) < 0) {
