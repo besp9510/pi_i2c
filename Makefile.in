@@ -32,7 +32,7 @@ OBJEXT := o
 CFLAGS   := -fPIC -Wall -Wextra -O2 $(DEBUG_SYM) # C flags
 LDFLAGS  := -shared
 
-LIB     := -lpimicrosleephard -lpilwgpio
+LIB     :=
 INC     := -I$(INCDIR)
 INCDEP  := -I$(INCDIR)
 

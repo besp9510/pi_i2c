@@ -219,15 +219,15 @@ void speed_test_read_i2c(int slave_address, int register_address,
         round_trip_data_rate[i] = (float) n_bytes * 8 / run_time;
         avg_round_trip_data_rate += round_trip_data_rate[i];
 
-        printf("\nTime to read %d bytes: %.3f seconds\n", n_bytes, run_time);
-        printf("Round trip effective data rate: %.3f kbps\n",
+        printf("\nTime to read %d bytes: %4.3e seconds\n", n_bytes, run_time);
+        printf("Round trip useful data rate: %.3f kbps\n",
                round_trip_data_rate[i] / 1e3);
     }
 
     // Finally get the averaged "round trip" data rate:
     avg_round_trip_data_rate = avg_round_trip_data_rate / iterations;
 
-    printf("Average round trip effective data rate: %.3f kbps\n",
+    printf("Average round trip useful data rate: %.3f kbps\n",
            avg_round_trip_data_rate / 1e3);
 
     printf("Test complete\n");
@@ -271,15 +271,15 @@ void speed_test_write_i2c(int slave_address, int register_address,
         round_trip_data_rate[i] = (float) n_bytes * 8 / run_time;
         avg_round_trip_data_rate += round_trip_data_rate[i];
 
-        printf("Time to write %d bytes: %.3f seconds\n", n_bytes, run_time);
-        printf("Round trip effective data rate: %.3f kbps\n",
+        printf("Time to write %d bytes: %4.3e seconds\n", n_bytes, run_time);
+        printf("Round trip useful data rate: %.3f kbps\n",
                round_trip_data_rate[i] / 1e3);
     }
 
     // Finally get the averaged "round trip" data rate:
     avg_round_trip_data_rate = avg_round_trip_data_rate / iterations;
 
-    printf("Average round trip effective data rate: %.3f kbps\n",
+    printf("Average round trip useful data rate: %.3f kbps\n",
            avg_round_trip_data_rate / 1e3);
 
     printf("Test complete\n");
@@ -292,44 +292,48 @@ void test_get_configs_i2c(void) {
     struct pi_i2c_configs configs = get_configs_i2c();
 
     printf("test_get_configs_i2c() has returned the following:\n");
-    printf("scl_t_low_sleep_us = %ld\n", configs.scl_t_low_sleep_us);
-    printf("scl_t_high_sleep_us = %ld\n", configs.scl_t_high_sleep_us);
+    printf("scl_t_low_sleep_us = %d\n", configs.scl_t_low_sleep_us);
+    printf("scl_t_high_sleep_us = %d\n", configs.scl_t_high_sleep_us);
     printf("scl_actual_clock_frequency_hz = %.3f\n",
            configs.scl_actual_clock_frequency_hz);
+    printf("min_t_hdsta_sleep_us = %d\n", configs.min_t_hdsta_sleep_us);
+    printf("min_t_susta_sleep_us = %d\n", configs.min_t_susta_sleep_us);
+    printf("min_t_susto_sleep_us = %d\n", configs.min_t_susto_sleep_us);
+    printf("min_t_buf_sleep_us = %d\n", configs.min_t_buf_sleep_us);
     printf("Test complete\n");
 }
 
 void main(void) {
     // Use the default I2C pins:
-    // (Ensure that Raspian I2C interface is disabled via rasp-config otherwise
-    //  risk unpredictable behavior)
-    int sda_pin = 2;
-    int scl_pin = 3;
+    // Ensure that Raspian I2C interface is disabled via rasp-config otherwise
+    // risk unpredictable behavior!
+    int sda_pin = 2; // UPDATE
+    int scl_pin = 3; // UPDATE
 
     int speed_grade = I2C_FULL_SPEED;
 
     // Addresses & data to use when testing write:
-    int write_slave_address = 0x1C;
-    int write_register_address = 0x21;
-    int write_data[1] = {0x00};
-    int write_bytes = 1;
+    int write_slave_address = 0x1C;     // UPDATE
+    int write_register_address = 0x21;  // UPDATE
+    int write_data[1] = {0x00};         // UPDATE
+    int write_bytes = 1;                // UPDATE
     int write_iterations = 10;
 
-    int write_slave_address_multiple = 0x1C;
-    int write_register_address_multiple = 0x23;
-    int write_data_multiple[2] = {0x0, 0x0};
+    int write_slave_address_multiple = 0x1C;    // UPDATE
+    int write_register_address_multiple = 0x23; // UPDATE
+    int write_data_multiple[2] = {0x0, 0x0};    // UPDATE
     int write_bytes_multiple = 2;
 
-    int read_slave_address = 0x1C;
-    int read_register_address = 0x0F;
-    int read_bytes = 1;
+    int read_slave_address = 0x1C;    // UPDATE
+    int read_register_address = 0x0F; // UPDATE
+    int read_bytes = 1;               // UPDATE
     int read_iterations = 10;
-    int read_data[1];
+    int read_data[1];                 // UPDATE
 
-    int read_slave_address_multiple = 0x1C;
-    int read_register_address_multiple = 0x28;
-    int read_bytes_multiple = 2;
-    int read_data_multiple[read_bytes_multiple];
+    int read_slave_address_multiple = 0x1C;      // UPDATE
+    int read_register_address_multiple = 0x28;   // UPDATE
+    int read_bytes_multiple = 2;                 // UPDATE
+    int read_data_multiple[read_bytes_multiple]; // UPDATE
 
     printf("Begin pi_i2c_test.c\n");
 
@@ -372,17 +376,18 @@ void main(void) {
                                  read_register_address_multiple,
                                  read_data_multiple, read_bytes_multiple);
 
-    // Test reading multiple bytes to find effective data rate:
+
+    // Test reading multiple bytes to find useful data rate:
     speed_test_read_i2c(read_slave_address_multiple,
                         read_register_address_multiple,
                         read_data_multiple, read_bytes_multiple, 
-                        read_bytes_multiple);
+                        read_bytes_multiple*2);
 
     // Test writing multiple bytes to find effectve data rate:
     speed_test_write_i2c(write_slave_address_multiple,
                          write_register_address_multiple,
                          write_data_multiple, write_bytes_multiple, 
-                         write_bytes_multiple);
+                         write_bytes_multiple*2);
 
     // Test get statistics following all of the test calls:
     test_get_statistics_i2c();

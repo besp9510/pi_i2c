@@ -106,6 +106,9 @@ int write_repeated_start_condition_to_bus(void) {
     // condition can be written to the bus:
     gpio_set_mode(GPIO_INPUT, scl_gpio_pin);
 
+    // Wait setup time required for repeated START condition:
+    microsleep_hard(min_t_susta_sleep_us);
+
     // Ready for repeated start condition:
     write_start_condition_to_bus();
 

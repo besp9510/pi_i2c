@@ -11,9 +11,8 @@
 
 // I2C timing compliance nanosleep timespec definitions
 int min_t_hdsta_sleep_us = CEILING(MIN_T_HDSTA * 1e6);
-
+int min_t_susta_sleep_us = CEILING(MIN_T_SUSTA * 1e6);
 int min_t_susto_sleep_us = CEILING(MIN_T_SUSTO * 1e6);
-
 int min_t_buf_sleep_us = CEILING(MIN_T_BUF * 1e6);
 
 int scl_t_low_sleep_us = 0;
@@ -54,9 +53,13 @@ int config_i2c(int sda, int scl, int speed_grade) {
     // Definitions:
     int scl_clock_period_us;
 
+    int ret;
+
     // Setup microsleep function to eliminate additional over head at first
     // sleep function call:
-    setup_microsleep_hard();
+    if ((ret = setup_microsleep_hard()) < 0) {
+        return ret;
+    }
 
     // Set data and clock GPIO pin mappings:
     sda_gpio_pin = sda;

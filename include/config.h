@@ -36,8 +36,9 @@ extern int config_i2c_flag; // I2C lines and timings defined?
 extern struct pi_i2c_statistics statistics;
 
 // I2C timing compliance:
-extern int min_t_hdsta_sleep_us;      // Hold Time for START condition
+extern int min_t_hdsta_sleep_us;      // Hold time for START condition
 extern int min_t_susto_sleep_us;      // Setup time for STOP condition
+extern int min_t_susta_sleep_us;      // Setup time for repeated START condition
 extern int min_t_buf_sleep_us;        // Time before new transmission
 extern int scl_t_low_sleep_us;        // SCL Low Period
 extern int scl_t_high_sleep_us;       // SCL High Period

@@ -359,7 +359,11 @@ struct pi_i2c_configs get_configs_i2c(void) {
     struct pi_i2c_configs configs = {
         .scl_t_low_sleep_us = scl_t_low_sleep_us,
         .scl_t_high_sleep_us = scl_t_high_sleep_us,
-        .scl_actual_clock_frequency_hz = scl_actual_clock_frequency_hz
+        .scl_actual_clock_frequency_hz = scl_actual_clock_frequency_hz,
+        .min_t_hdsta_sleep_us = min_t_hdsta_sleep_us,
+        .min_t_susta_sleep_us = min_t_susta_sleep_us,
+        .min_t_susto_sleep_us = min_t_susto_sleep_us,
+        .min_t_buf_sleep_us = min_t_buf_sleep_us
     };
 
     return configs;
