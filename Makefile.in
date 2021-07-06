@@ -102,6 +102,10 @@ install:
 	@echo "cp $(INCDIR)/$(HEADER) $(INCDESTDIR)/$(HEADER)"
 	@cp $(INCDIR)/$(HEADER) $(INCDESTDIR)/$(HEADER)
 
+	@echo "Installing Python library"
+	@echo "pip3 install python/"
+	@pip3 install python/
+
 # Uninstall libary and header file:
 uninstall:
 	@echo "Removing installed library at $(LIBDESTDIR)"
@@ -112,6 +116,10 @@ uninstall:
 	@echo "Configuring dynamic linker run-time bindings"
 	@echo "ldconfig -n $(LIBDESTDIR)"
 	@ldconfig -n $(LIBDESTDIR)
+
+	@echo "Uninstalling Python library"
+	@echo "pip3 uninstall pi_i2c"
+	@pip3 uninstall -y pi_i2c
 
 # Non-file targets:
 .PHONY: all remake clean install uninstall

@@ -12,9 +12,11 @@ They are not required to compile pi_i2c.c into a shared library but are required
 
 ![gpio](images/i2c.png)
 
-pi_i2c.c is provided two ways for flexibility:
+pi_i2c.c is provided three ways for flexibility:
 1. C source and header files that can be compiled along with your program
 2. C shared library
+3. Python package
+    * Interface with pi_i2c.c using Python 3!
 
 ## Getting Started
 
@@ -208,14 +210,14 @@ Setup the library prior to using pi_i2c.c. Define which GPIO pins will be used f
 * `I2C_FULL_SPEED` (400 kHz)
 
 ```c
-int config_i2c(int sda, int scl, int speed_grade);
+int config_i2c(unsigned int sda, unsigned int scl, unsigned int speed_grade);
 ```
 
-`int sda` is the GPIO pin to use for the SDA line (BCM numbering)
+`unsigned int sda` is the GPIO pin to use for the SDA line (BCM numbering).
 
-`int scl` is the GPIO pin to use for the SCL line (BCM numbering)
+`unsigned int scl` is the GPIO pin to use for the SCL line (BCM numbering).
 
-`int speed_grade` is the speed grade (bit rate) to use for the I2C bus according to standard I2C definition.
+`unsigned int speed_grade` is the speed grade (bit rate) to use for the I2C bus according to standard I2C definition.
 
 ##### Return Value
 `config_i2c()` returns 0 upon success. On error, an error number is returned.
@@ -223,6 +225,7 @@ int config_i2c(int sda, int scl, int speed_grade);
 Error numbers:
 * `ENOPIVER` : Could not get Pi board revision.
 * `MAP_FAILED` : Memory map failed (most likely due to permissions)
+* `EINVAL` : Invalid argument (e.g. sda, scl, or speed grade out of range)
 
 #### Scan I2C Bus
 Scan the bus for any I2C slaves. Note that only 7-bit addresses are supported. The function requires a pointer to an address book (a 127-element integer array) to be passed as an argument. The indices of this address book correspond directly to an I2C address; for example, index 0x1 of the array corresponds to an I2C device at an address of 0x1.
@@ -258,16 +261,16 @@ Error numbers:
 Write n-bytes to a device's register address. Data to write to the device's register address is passed into the function as a pointer to an n-byte integer data array.
 
 ```c
-int write_i2c(int slave_address, int register_address, int *data, int n_bytes);
+int write_i2c(unsigned int slave_address, unsigned int register_address, int *data, unsigned int n_bytes);
 ```
 
-The `int slave_address` argument is the slave's I2C address.
+The `unsigned int slave_address` argument is the slave's I2C address.
 
-The `int register_address` argument is the specific register data will be written to.
+The `unsigned int register_address` argument is the specific register data will be written to.
 
 Data to write to the slave's register address is stored in the `int *data` argument: a `n_bytes` integer array that is passed into the function as a pointer.
 
-Number of bytes `n_bytes` argument is the number of bytes to write to the slave's register address. `int *data` must be at least `n_bytes` large.
+Number of bytes `unsigned int n_bytes` argument is the number of bytes to write to the slave's register address. `int *data` must be at least `n_bytes` large.
 
 ##### Return Value
 `write_i2c()` returns 0 upon success. On error, an error number is returned.
@@ -283,22 +286,23 @@ Error numbers:
 * `ENACK` : Slave did not acknowledge slave address
 * `EBADXFR` : Slave did not acknowledge during byte transfer (read or write)
 * `EBADREGADDR` : Slave did not acknowledge register address
+* `EINVAL` : Invalid argument (e.g. slave_address or register address out of range; negative n_bytes)
 
 #### Read
 
 Read n-bytes from a device's register address. Data read from the device will be stored back into the n-byte integer data array passed into the function by pointer.
 
 ```c
-int read_i2c(int slave_address, int register_address, int *data, int n_bytes);
+int read_i2c(unsigned int slave_address, unsigned int register_address, int *data, unsigned int n_bytes);
 ```
 
-The `int slave_address` argument is the slave's I2C address.
+The `unsigned int slave_address` argument is the slave's I2C address.
 
-The `int register_address` argument is the specific register data will be read from. Note, when more than 1 byte is read from A register, the register address will automatically increase by 1 each time a byte is read. This results in the n-byte of data being read from `int register_address` + n (indexed from 0).
+The `unsigned int register_address` argument is the specific register data will be read from. Note, when more than 1 byte is read from A register, the register address will automatically increase by 1 each time a byte is read. This results in the n-byte of data being read from `int register_address` + n (indexed from 0).
 
 Data read from slave's register address is stored back in the `int *data` argument: a `n_bytes` integer array that is passed into the function as a pointer. 
 
-Number of bytes `n_bytes` argument is the number of bytes to read to the slave's register address. `int *data` must be at least `n_bytes` large.
+Number of bytes `unsigned int n_bytes` argument is the number of bytes to read to the slave's register address. `int *data` must be at least `n_bytes` large.
 
 ##### Return Value
 `read_i2c()` returns 0 upon success. On error, an error number is returned.
@@ -315,6 +319,7 @@ Error numbers:
 * `EBADXFR` : Slave did not acknowledge during byte transfer (read or write)
 * `EBADREGADDR` : Slave did not acknowledge register address
 * `ENACKRST` : Slave did not respond after repeated start slave address
+* `EINVAL` : Invalid argument (e.g. slave_address or register address out of range; negative n_bytes)
 
 #### Reset Bus
 

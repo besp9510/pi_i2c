@@ -51,6 +51,7 @@
 
 // Include C standard libraries:
 #include <time.h>  // C Standard get and manipulate time library
+#include <errno.h> // C Standard for error conditions
 
 // Include header files:
 #include "pi_i2c.h"                   // Speed grade, macros, and outward
@@ -65,7 +66,8 @@
 #include <pi_microsleep_hard.h>       // Hard microsleep function for the Pi
 
 // Read N number of bytes from the specified register address of a slave
-int read_i2c(int slave_address, int register_address, int *data, int n_bytes) {
+int read_i2c(unsigned int slave_address, unsigned int register_address,
+             int *data, unsigned int n_bytes) {
     // Definitions:
     int byte;
     int i;
@@ -79,6 +81,22 @@ int read_i2c(int slave_address, int register_address, int *data, int n_bytes) {
     // timings are not yet defined:
     if (!config_i2c_flag) {
         return -EI2CNOTCFG;
+    }
+
+    // Only 7-bit addressing is supported:
+    if (slave_address > 0x7F) {
+        return -EINVAL;
+    }
+
+    // Register address cannot be greater than 0xFF (11111111)
+    // (i.e. can only be an 8-bit number):
+    if (register_address > 0xFF) {
+        return -EINVAL;
+    }
+
+    // Zero makes no sense caller:
+    if (n_bytes == 0) {
+        return -EINVAL;
     }
 
     // Get bus into known state by using STOP condition:
@@ -176,7 +194,8 @@ int read_i2c(int slave_address, int register_address, int *data, int n_bytes) {
 }
 
 // Write N number of bytes to the specified register address of a slave
-int write_i2c(int slave_address, int register_address, int *data, int n_bytes) {
+int write_i2c(unsigned int slave_address, unsigned int register_address,
+              int *data, unsigned int n_bytes) {
     // Definitions:
     int write_status;
     int i;
@@ -186,6 +205,22 @@ int write_i2c(int slave_address, int register_address, int *data, int n_bytes) {
     // timings are not yet defined:
     if (!config_i2c_flag) {
         return -EI2CNOTCFG;
+    }
+
+    // Only 7-bit addressing is supported:
+    if (slave_address > 0x7F) {
+        return -EINVAL;
+    }
+
+    // Register address cannot be greater than 0xFF (11111111)
+    // (i.e. can only be an 8-bit number):
+    if (register_address > 0xFF) {
+        return -EINVAL;
+    }
+
+    // Zero makes no sense caller:
+    if (n_bytes == 0) {
+        return -EINVAL;
     }
 
     // Get bus into known state by using STOP condition:

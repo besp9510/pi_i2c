@@ -8,3 +8,4 @@ Makefile
 
 # Vscode
 **/.vscode/
+**/__pycache__/

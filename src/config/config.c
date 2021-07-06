@@ -1,5 +1,6 @@
 // Include C standard libraries:
 #include <time.h>  // C Standard get and manipulate time library
+#include <errno.h> // C Standard for error conditions
 
 // Include header files:
 #include "pi_i2c.h"                   // Speed grade, macros, and outward
@@ -49,11 +50,22 @@ struct pi_i2c_statistics statistics = {
 };
 
 // Configure pi_i2c
-int config_i2c(int sda, int scl, int speed_grade) {
+int config_i2c(unsigned int sda, unsigned int scl, unsigned int speed_grade) {
     // Definitions:
     int scl_clock_period_us;
 
     int ret;
+
+    // There are no more than 31 physical GPIO pins:
+    if ((sda > 31) || (scl > 31)) {
+        return -EINVAL;
+    }
+
+    // Don't allow speed grade to be set to more than full-speed as
+    // microsleep_hard will not allow anything faster:
+    if (speed_grade > I2C_FULL_SPEED) {
+        return -EINVAL;
+    }
 
     // Setup microsleep function to eliminate additional over head at first
     // sleep function call:
