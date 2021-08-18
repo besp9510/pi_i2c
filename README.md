@@ -18,6 +18,8 @@ pi_i2c.c is provided three ways for flexibility:
 3. Python package
     * Interface with pi_i2c.c using Python 3!
 
+A test script is included in this repository to checkout the library working on your Pi. You can also checkout this [LIS3MDL example](https://github.com/besp9510/pi_lis3mdl_example) I wrote to test out the library on a specific device.
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
