@@ -92,24 +92,24 @@ int scl_pin = 3; // UPDATE
 int speed_grade = I2C_FULL_SPEED;
 
 // Addresses & data to use when testing write:
-int write_slave_address = 0x1C;     // UPDATE
+int write_device_address = 0x1C;    // UPDATE
 int write_register_address = 0x21;  // UPDATE
 int write_data[1] = {0x00};         // UPDATE
 int write_bytes = 1;                // UPDATE
 int write_iterations = 10;
 
-int write_slave_address_multiple = 0x1C;    // UPDATE
+int write_device_address_multiple = 0x1C;   // UPDATE
 int write_register_address_multiple = 0x23; // UPDATE
 int write_data_multiple[2] = {0x0, 0x0};    // UPDATE
 int write_bytes_multiple = 2;
 
-int read_slave_address = 0x1C;    // UPDATE
+int read_device_address = 0x1C;   // UPDATE
 int read_register_address = 0x0F; // UPDATE
 int read_bytes = 1;               // UPDATE
 int read_iterations = 10;
 int read_data[1];                 // UPDATE
 
-int read_slave_address_multiple = 0x1C;      // UPDATE
+int read_device_address_multiple = 0x1C;     // UPDATE
 int read_register_address_multiple = 0x28;   // UPDATE
 int read_bytes_multiple = 2;                 // UPDATE
 int read_data_multiple[read_bytes_multiple]; // UPDATE
@@ -142,12 +142,12 @@ $ make
 This will create an executable called `test_pi_i2c` under `bin/`.
 
 ## Documentation
-pi_i2c.c implements I2C according to the [UM10204 I2C-bus specification and user manual](https://www.nxp.com/docs/en/user-guide/UM10204.pdf). Specifically, the following I2C bus protocol features are supported for **single master configuration only**:
+pi_i2c.c implements I2C according to the [UM10204 I2C-bus specification and user manual](https://www.nxp.com/docs/en/user-guide/UM10204.pdf). Specifically, the following I2C bus protocol features are supported for **single controller configuration only**:
 * START condition
 * STOP condition
 * Acknowledge
 * Clock Stretching
-* 7-bit slave address
+* 7-bit device address
 * Software reset
     * *See error handling for more details*
 * Standard-mode and full-speed mode
@@ -172,15 +172,15 @@ The following table summarizes the types of bus errors detected, actions taken b
 
 | Bus Error | Action Taken | Error Number | Further Recovery Actions|
 |-|-|-|-|
-| Slave did not acknowledge slave address | Halt transaction and return error number | `ENACK` | Check if slave is responsive; otherwise power cycle slave |
-| Slave did not acknowledge register address | Halt transaction and return error number | `EBADREGADDR` | Check if slave is responsive; otherwise power cycle slave |
-| Slave did not acknowledge during byte transfer | Halt transaction and return error number | `EBADXFR` | Check if slave is responsive; otherwise power cycle slave |
-| Slave not responsive after clock stretch timeout (slave forcing SCL line held low) | Halt transaction and return error number | `ECLKTIMEOUT` | Check if slave is responsive; otherwise power cycle slave |
-| Slave did not respond after repeated start | Halt transaction and return error number | `ENACKRST` | Check if slave is responsive; otherwise power cycle slave |
-| Slave is forcing SDA line low (slave hung) | Reset bus to recover; if still hung, halt transaction and return error number | `ESLAVEHUNG` | Power cycle slave |
-| Slave is holding SDA and SCL lines low causing bus to be locked | Halt transaction and return error number | `EBUSLOCKUP` | Power cycle slave |
-| Slave is forcing SDA and/or SCL line low causing START condition writes to fail | Halt transaction and return error number | `EFAILSTCOND` | Power cycle slave |
-| Bus is an unexpected state following an unknown error | Halt transaction and return error number | `EBUSUNKERR` | Power cycle slave |
+| Device did not acknowledge device address | Halt transaction and return error number | `ENACK` | Check if device is responsive; otherwise power cycle device |
+| Device did not acknowledge register address | Halt transaction and return error number | `EBADREGADDR` | Check if device is responsive; otherwise power cycle device |
+| Device did not acknowledge during byte transfer | Halt transaction and return error number | `EBADXFR` | Check if device is responsive; otherwise power cycle device |
+| Device not responsive after clock stretch timeout (device forcing SCL line held low) | Halt transaction and return error number | `ECLKTIMEOUT` | Check if device is responsive; otherwise power cycle device |
+| Device did not respond after repeated start | Halt transaction and return error number | `ENACKRST` | Check if device is responsive; otherwise power cycle device |
+| Device is forcing SDA line low (device hung) | Reset bus to recover; if still hung, halt transaction and return error number | `EdeviceHUNG` | Power cycle device |
+| Device is holding SDA and SCL lines low causing bus to be locked | Halt transaction and return error number | `EBUSLOCKUP` | Power cycle device |
+| Device is forcing SDA and/or SCL line low causing START condition writes to fail | Halt transaction and return error number | `EFAILSTCOND` | Power cycle device |
+| Bus is an unexpected state following an unknown error | Halt transaction and return error number | `EBUSUNKERR` | Power cycle device |
 
 Bottom line: if pi_i2c.c sees the bus in an expected state at any time then the transaction will be cancelled. This is to prevent any accidental and undefined data transfers to take place which may cause hardware damage (ask me about my broken IMU if would like to know more about this).
 
@@ -188,7 +188,7 @@ Bottom line: if pi_i2c.c sees the bus in an expected state at any time then the 
 Bit rate achievable by pi_i2c.c is primarily a function of the clock accuracy, minimum I2C timings, and I2C protocol messaging overhead:
 * [pi_microsleep_hard.c](https://github.com/besp9510/pi_microsleep_hard) provides a hard microsleep function with a resolution of 1 us
 * Minimum I2C timings (found in the above table) rounded up to the nearest 1 us (per pi_microsleep_hard.c)
-* Messaging overhead: STOP, START, Repeated START conditions, ACKS, and slave & register addresses
+* Messaging overhead: STOP, START, Repeated START conditions, ACKS, and device & register addresses
 
 Using these constraints, pi_i2c.c achieves a total and useful bit rate that will be lower than ideal. I2C full-speed mode (400 kHz), for example, would have the following timings:
 
@@ -196,7 +196,7 @@ Using these constraints, pi_i2c.c achieves a total and useful bit rate that will
 
 Actual frequency is less than the desired 400 kHz due to the 1 us rounding on T_Low & T_High required by the hard microsleep function. Additionally, consider the minimum I2C timings have also been rounded resulting is longer wait times. End result is smaller bit rate at the trade of flexibility and overall features pi_i2c.c provides.
 
-The theoretical useful bit rate can be then calculated for a n-byte read and write transaction using these achievable timings. Useful bit rate is defined as how much "useful" data is being transferred in a given read or write transaction. Not all data in an I2C message is useful in the sense that some of it is overhead and not the data we are actually trying to transfer between the master and slave device. Theoretical useful bit rates are calculated and plotted for the I2C full-speed mode (400 kHz) example discussed above:
+The theoretical useful bit rate can be then calculated for a n-byte read and write transaction using these achievable timings. Useful bit rate is defined as how much "useful" data is being transferred in a given read or write transaction. Not all data in an I2C message is useful in the sense that some of it is overhead and not the data we are actually trying to transfer between the controller and device. Theoretical useful bit rates are calculated and plotted for the I2C full-speed mode (400 kHz) example discussed above:
 
 ![gpio](images/example_bitrates.png)
 
@@ -230,7 +230,7 @@ Error numbers:
 * `EINVAL` : Invalid argument (e.g. sda, scl, or speed grade out of range)
 
 #### Scan I2C Bus
-Scan the bus for any I2C slaves. Note that only 7-bit addresses are supported. The function requires a pointer to an address book (a 127-element integer array) to be passed as an argument. The indices of this address book correspond directly to an I2C address; for example, index 0x1 of the array corresponds to an I2C device at an address of 0x1.
+Scan the bus for any I2C devices. Note that only 7-bit addresses are supported. The function requires a pointer to an address book (a 127-element integer array) to be passed as an argument. The indices of this address book correspond directly to an I2C address; for example, index 0x1 of the array corresponds to an I2C device at an address of 0x1.
 
 ```c
 address_book[127] = {
@@ -251,11 +251,11 @@ The address book `int *address_book` argument is a pointer to a 127-element inte
 
 Error numbers:
 * `EI2CNOTCFG` : pi_i2c has not yet been configured
-* `ESLAVEHUNG` : Slave forcing SDA line low
-* `ECLKTIMEOUT` : Slave not responsive after clock stretch timeout
-* `EBUSLOCKUP` : Bus is locked: SDA and SCL lines are being held low by slave
+* `EDEVICEHUNG` : Device forcing SDA line low
+* `ECLKTIMEOUT` : Device not responsive after clock stretch timeout
+* `EBUSLOCKUP` : Bus is locked: SDA and SCL lines are being held low by device
 * `EBUSUNKERR` : Bus is in an unexpected state following an unknown error
-* `ECLKTIMEOUT` : Slave not responsive after clock stretch timeout
+* `ECLKTIMEOUT` : Device not responsive after clock stretch timeout
 * `EFAILSTCOND` : Failed to write a START condition to the bus. Most likely, error occurred during a previous STOP condition.
 
 #### Write
@@ -263,69 +263,69 @@ Error numbers:
 Write n-bytes to a device's register address. Data to write to the device's register address is passed into the function as a pointer to an n-byte integer data array.
 
 ```c
-int write_i2c(unsigned int slave_address, unsigned int register_address, int *data, unsigned int n_bytes);
+int write_i2c(unsigned int device_address, unsigned int register_address, int *data, unsigned int n_bytes);
 ```
 
-The `unsigned int slave_address` argument is the slave's I2C address.
+The `unsigned int device_address` argument is the device's I2C address.
 
 The `unsigned int register_address` argument is the specific register data will be written to.
 
-Data to write to the slave's register address is stored in the `int *data` argument: a `n_bytes` integer array that is passed into the function as a pointer.
+Data to write to the device's register address is stored in the `int *data` argument: a `n_bytes` integer array that is passed into the function as a pointer.
 
-Number of bytes `unsigned int n_bytes` argument is the number of bytes to write to the slave's register address. `int *data` must be at least `n_bytes` large.
+Number of bytes `unsigned int n_bytes` argument is the number of bytes to write to the device's register address. `int *data` must be at least `n_bytes` large.
 
 ##### Return Value
 `write_i2c()` returns 0 upon success. On error, an error number is returned.
 
 Error numbers:
 * `EI2CNOTCFG` : pi_i2c has not yet been configured
-* `ESLAVEHUNG` : Slave forcing SDA line low
-* `ECLKTIMEOUT` : Slave not responsive after clock stretch timeout
-* `EBUSLOCKUP` : Bus is locked: SDA and SCL lines are being held low by slave
+* `EDEVICEHUNG` : Device forcing SDA line low
+* `ECLKTIMEOUT` : Device not responsive after clock stretch timeout
+* `EBUSLOCKUP` : Bus is locked: SDA and SCL lines are being held low by device
 * `EBUSUNKERR` : Bus is in an unexpected state following an unknown error
-* `ECLKTIMEOUT` : Slave not responsive after clock stretch timeout
+* `ECLKTIMEOUT` : Device not responsive after clock stretch timeout
 * `EFAILSTCOND` : Failed to write a START condition to the bus. Most likely, error occurred during a previous STOP condition.
-* `ENACK` : Slave did not acknowledge slave address
-* `EBADXFR` : Slave did not acknowledge during byte transfer (read or write)
-* `EBADREGADDR` : Slave did not acknowledge register address
-* `EINVAL` : Invalid argument (e.g. slave_address or register address out of range; negative n_bytes)
+* `ENACK` : Device did not acknowledge device address
+* `EBADXFR` : Device did not acknowledge during byte transfer (read or write)
+* `EBADREGADDR` : Device did not acknowledge register address
+* `EINVAL` : Invalid argument (e.g. device_address or register address out of range; negative n_bytes)
 
 #### Read
 
 Read n-bytes from a device's register address. Data read from the device will be stored back into the n-byte integer data array passed into the function by pointer.
 
 ```c
-int read_i2c(unsigned int slave_address, unsigned int register_address, int *data, unsigned int n_bytes);
+int read_i2c(unsigned int device_address, unsigned int register_address, int *data, unsigned int n_bytes);
 ```
 
-The `unsigned int slave_address` argument is the slave's I2C address.
+The `unsigned int device_address` argument is the device's I2C address.
 
 The `unsigned int register_address` argument is the specific register data will be read from. Note, when more than 1 byte is read from A register, the register address will automatically increase by 1 each time a byte is read. This results in the n-byte of data being read from `int register_address` + n (indexed from 0).
 
-Data read from slave's register address is stored back in the `int *data` argument: a `n_bytes` integer array that is passed into the function as a pointer. 
+Data read from device's register address is stored back in the `int *data` argument: a `n_bytes` integer array that is passed into the function as a pointer. 
 
-Number of bytes `unsigned int n_bytes` argument is the number of bytes to read to the slave's register address. `int *data` must be at least `n_bytes` large.
+Number of bytes `unsigned int n_bytes` argument is the number of bytes to read to the device's register address. `int *data` must be at least `n_bytes` large.
 
 ##### Return Value
 `read_i2c()` returns 0 upon success. On error, an error number is returned.
 
 Error numbers:
 * `EI2CNOTCFG` : Pi I2C has not yet been configured
-* `ESLAVEHUNG` : Slave forcing SDA line low
-* `ECLKTIMEOUT` : Slave not responsive after clock stretch timeout
-* `EBUSLOCKUP` : Bus is locked: SDA and SCL lines are being held low by slave
+* `EDEVICEHUNG` : Device forcing SDA line low
+* `ECLKTIMEOUT` : Device not responsive after clock stretch timeout
+* `EBUSLOCKUP` : Bus is locked: SDA and SCL lines are being held low by device
 * `EBUSUNKERR` : Bus is in an unexpected state following an unknown error
-* `ECLKTIMEOUT` : Slave not responsive after clock stretch timeout
+* `ECLKTIMEOUT` : Device not responsive after clock stretch timeout
 * `EFAILSTCOND` : Failed to write a START condition to the bus. Most likely, error occurred during a previous STOP condition.
-* `ENACK` : Slave did not acknowledge slave address
-* `EBADXFR` : Slave did not acknowledge during byte transfer (read or write)
-* `EBADREGADDR` : Slave did not acknowledge register address
-* `ENACKRST` : Slave did not respond after repeated start slave address
-* `EINVAL` : Invalid argument (e.g. slave_address or register address out of range; negative n_bytes)
+* `ENACK` : Device did not acknowledge device address
+* `EBADXFR` : Device did not acknowledge during byte transfer (read or write)
+* `EBADREGADDR` : Device did not acknowledge register address
+* `ENACKRST` : Device did not respond after repeated start device address
+* `EINVAL` : Invalid argument (e.g. device_address or register address out of range; negative n_bytes)
 
 #### Reset Bus
 
-Reset I2C bus by issuing 9 clock pulses. Typically used to un-stuck the SDA line after a slave is forcing it low. This function is automatically called in the case of error handling but is available to used at any time.
+Reset I2C bus by issuing 9 clock pulses. Typically used to un-stuck the SDA line after a device is forcing it low. This function is automatically called in the case of error handling but is available to used at any time.
 
 ```c
 int reset_i2c(void);
@@ -336,7 +336,7 @@ int reset_i2c(void);
 
 Error numbers:
 * `EI2CNOTCFG` : Pi I2C has not yet been configured
-* `ECLKTIMEOUT` : Slave not responsive after clock stretch timeout
+* `ECLKTIMEOUT` : Device not responsive after clock stretch timeout
 
 #### Get Statistics
 

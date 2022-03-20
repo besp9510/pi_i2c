@@ -46,7 +46,7 @@ int write_start_condition_to_bus(void) {
     gpio_clear(sda_gpio_pin);
 
     // Wait setup time required for START condition condition otherwise risk
-    // slaves not understanding:
+    // devices not understanding:
     microsleep_hard(min_t_hdsta_sleep_us);
 
     // Set SDA to complete STOP:
@@ -89,7 +89,7 @@ int write_stop_condition_to_bus(void) {
     gpio_set_mode(GPIO_INPUT, scl_gpio_pin);
 
     // Wait setup time required for STOP condition otherwise
-    // risk slaves not understanding:
+    // risk devices not understanding:
     microsleep_hard(min_t_susto_sleep_us);
 
     // Set SDA to complete STOP condition:

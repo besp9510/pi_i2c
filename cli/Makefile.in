@@ -24,8 +24,8 @@
 # Compiler:
 CC := gcc
 
-# Target binary:
-TARGET := test_pi_i2c
+# Target shared library soname:
+TARGET := pi_i2c
 
 # Root directories:
 ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -35,6 +35,7 @@ SRCDIR     := $(ROOT)/src
 INCDIR     := $(ROOT)/include
 BUILDDIR   := $(ROOT)/obj
 TARGETDIR  := $(ROOT)/bin
+DESTDIR    := $(PREFIX)/bin
 
 # Extensions:
 SRCEXT := c
@@ -42,7 +43,7 @@ DEPEXT := d
 OBJEXT := o
 
 # Flags, Libraries and Includes:
-CFLAGS   := -Wall -O2 -g # C flags
+CFLAGS   := -Wall -Wextra -O2 $(DEBUG_SYM) # C flags
 LDFLAGS  :=
 
 LIB     := -lpii2c -lpimicrosleephard -lpilwgpio
@@ -52,7 +53,7 @@ INCDEP  := -I$(INCDIR)
 MACRO := $(DEBUG_LOG)
 
 # Find source and object files:
-SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
+SOURCES := $(shell find $(SRCDIR) -type f -name "*.$(SRCEXT)")
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,\
 	$(SOURCES:.$(SRCEXT)=.$(OBJEXT)))
 
@@ -62,6 +63,9 @@ OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,\
 
 # Default make:
 source: $(TARGET)
+
+# Remake:
+remake: clean all
 
 # Make the directories
 directories:
@@ -93,5 +97,18 @@ $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 		| fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >> $(BUILDDIR)/$*.$(DEPEXT)
 	@rm -f $(BUILDDIR)/$*.$(DEPEXT).tmp
 
+# Install executable:
+install:
+	@echo "Installing library to $(LIBDESTDIR)"
+	@echo "cp $(TARGETDIR)/$(TARGET) $(DESTDIR)/$(TARGET)"
+	@cp $(TARGETDIR)/$(TARGET) $(DESTDIR)/$(TARGET)
+
+# Uninstall executable:
+uninstall:
+	@echo "Removing installed library at $(LIBDESTDIR)"
+	@echo "Removing installed header files at $(INCDESTDIR)"
+	@echo "rm -rf $(DESTDIR)/$(TARGET)"
+	@rm -rf $(DESTDIR)/$(TARGET)
+
 # Non-file targets:
-.PHONY: all remake clean library
+.PHONY: all remake clean install uninstall

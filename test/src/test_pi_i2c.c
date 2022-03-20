@@ -58,18 +58,18 @@ void test_scan_bus_i2c(void) {
 }
 
 // Test I2C write capability
-void test_write_i2c_one_byte(int slave_address, int register_address,
+void test_write_i2c_one_byte(int device_address, int register_address,
                              int *data, int n_bytes) {
     int ret;
 
     printf("Testing write_i2c()\n");
-    printf("slave_address = 0x%X\n", slave_address);
+    printf("device_address = 0x%X\n", device_address);
     printf("register_address = 0x%X\n", register_address);
     printf("data = 0x%X\n", data[0]);
     printf("n_bytes = %d\n", n_bytes);
 
-    // Write a byte to the slave:
-    ret = write_i2c(slave_address, register_address, data, n_bytes);
+    // Write a byte to the device:
+    ret = write_i2c(device_address, register_address, data, n_bytes);
 
     printf("write_i2c() has returned %d\n", ret);
     printf("Test complete\n");
@@ -77,21 +77,21 @@ void test_write_i2c_one_byte(int slave_address, int register_address,
 
 // Test I2C write capability over a number of iterations
 // to calculate success rate:
-void test_write_i2c_iterative(int slave_address, int register_address,
+void test_write_i2c_iterative(int device_address, int register_address,
                              int *data, int n_bytes, int iterations) {
     int i;
     int ret;
 
     printf("Testing write_i2c() iteratively\n");
-    printf("slave_address = 0x%X\n", slave_address);
+    printf("device_address = 0x%X\n", device_address);
     printf("register_address = 0x%X\n", register_address);
     printf("data = 0x%X\n", data[0]);
     printf("n_bytes = %d\n", n_bytes);
     printf("Running %d iterations\n", iterations);
 
-    // Write a byte to the slave multiple times in a row:
+    // Write a byte to the device multiple times in a row:
     for (i = 0; i < iterations; i++) {
-        ret = write_i2c(slave_address, register_address, data, n_bytes);
+        ret = write_i2c(device_address, register_address, data, n_bytes);
 
         printf("%d: write_i2c() has returned %d\n", i, ret);
     }
@@ -100,18 +100,18 @@ void test_write_i2c_iterative(int slave_address, int register_address,
 }
 
 // Test I2C write capability
-void test_read_i2c_one_byte(int slave_address, int register_address,
+void test_read_i2c_one_byte(int device_address, int register_address,
                             int *data, int n_bytes) {
     int ret;
 
     printf("Testing read_i2c()\n");
-    printf("slave_address = 0x%X\n", slave_address);
+    printf("device_address = 0x%X\n", device_address);
     printf("register_address = 0x%X\n", register_address);
     printf("data = 0x%X\n", data[0]);
     printf("n_bytes = %d\n", n_bytes);
 
-    // Read a byte from the slave:
-    ret = read_i2c(slave_address, register_address, data, n_bytes);
+    // Read a byte from the device:
+    ret = read_i2c(device_address, register_address, data, n_bytes);
 
     printf("read_i2c() has returned %d\n", ret);
     printf("Byte read = 0x%X\n", data[0]);
@@ -120,21 +120,21 @@ void test_read_i2c_one_byte(int slave_address, int register_address,
 
 // Test I2C read capability over a number of iterations
 // to calculate success rate:
-void test_read_i2c_iterative(int slave_address, int register_address,
+void test_read_i2c_iterative(int device_address, int register_address,
                              int *data, int n_bytes, int iterations) {
     int i;
     int ret;
 
     printf("Testing read_i2c() iteratively\n");
-    printf("slave_address = 0x%X\n", slave_address);
+    printf("device_address = 0x%X\n", device_address);
     printf("register_address = 0x%X\n", register_address);
     printf("data = 0x%X\n", data[0]);
     printf("n_bytes = %d\n", n_bytes);
     printf("Running %d iterations\n", iterations);
 
-    // Read a byte from the slave multiple times in a row:
+    // Read a byte from the device multiple times in a row:
     for (i = 0; i < iterations; i++) {
-        ret = read_i2c(slave_address, register_address, data, n_bytes);
+        ret = read_i2c(device_address, register_address, data, n_bytes);
 
         printf("%d: read_i2c() has returned %d (Byte read = 0x%X)\n",
                i, ret, data[0]);
@@ -143,19 +143,19 @@ void test_read_i2c_iterative(int slave_address, int register_address,
     printf("Test complete\n");
 }
 
-void test_read_i2c_multiple_bytes(int slave_address, int register_address,
+void test_read_i2c_multiple_bytes(int device_address, int register_address,
                                   int *data, int n_bytes) {
     int i;
     int ret;
 
     printf("Testing read_i2c()\n");
-    printf("slave_address = 0x%X\n", slave_address);
+    printf("device_address = 0x%X\n", device_address);
     printf("register_address = 0x%X\n", register_address);
     printf("data = 0x%X\n", data[0]);
     printf("n_bytes = %d\n", n_bytes);
 
-    // Read a byte from the slave:
-    ret = read_i2c(slave_address, register_address, data, n_bytes);
+    // Read a byte from the device:
+    ret = read_i2c(device_address, register_address, data, n_bytes);
 
     printf("read_i2c() has returned %d\n", ret);
 
@@ -189,14 +189,14 @@ void test_get_statistics_i2c(void) {
     printf("num_bus_lockups = %d\n", statistics.num_bus_lockups);
     printf("num_failed_start_cond = %d\n", statistics.num_failed_start_cond);
     printf("num_failed_stop_cond = %d\n", statistics.num_failed_stop_cond);
-    printf("num_slave_hung = %d\n", statistics.num_slave_hung);
+    printf("num_device_hung = %d\n", statistics.num_device_hung);
     printf("num_clock_stretching_timeouts = %d\n",
            statistics.num_clock_stretching_timeouts);
     printf("num_clock_stretch = %d\n", statistics.num_clock_stretch);
     printf("Test complete\n");
 }
 
-void speed_test_read_i2c(int slave_address, int register_address,
+void speed_test_read_i2c(int device_address, int register_address,
                          int *data, int n_bytes, int iterations) {
     int i;
     int j;
@@ -210,7 +210,7 @@ void speed_test_read_i2c(int slave_address, int register_address,
     float avg_round_trip_data_rate = 0;
 
     printf("Running speed test for read_i2c()\n");
-    printf("slave_address = 0x%X\n", slave_address);
+    printf("device_address = 0x%X\n", device_address);
     printf("register_address = 0x%X\n", register_address);
     printf("data = 0x%X\n", data[0]);
     printf("n_bytes = %d\n", n_bytes);
@@ -220,8 +220,8 @@ void speed_test_read_i2c(int slave_address, int register_address,
         // Grab the start time:
         clock_gettime(CLOCK_MONOTONIC, &start);
 
-        // Read a byte from the slave:
-        ret = read_i2c(slave_address, register_address, data, n_bytes);
+        // Read a byte from the device:
+        ret = read_i2c(device_address, register_address, data, n_bytes);
 
         // Grab the stop time:
         clock_gettime(CLOCK_MONOTONIC, &end);
@@ -256,7 +256,7 @@ void speed_test_read_i2c(int slave_address, int register_address,
     printf("Test complete\n");
 }
 
-void speed_test_write_i2c(int slave_address, int register_address,
+void speed_test_write_i2c(int device_address, int register_address,
                           int *data, int n_bytes, int iterations) {
     int i;
     int ret;
@@ -269,7 +269,7 @@ void speed_test_write_i2c(int slave_address, int register_address,
     float avg_round_trip_data_rate = 0;
 
     printf("Running speed test for write_i2c()\n");
-    printf("slave_address = 0x%X\n", slave_address);
+    printf("device_address = 0x%X\n", device_address);
     printf("register_address = 0x%X\n", register_address);
     printf("data = 0x%X\n", data[0]);
     printf("n_bytes = %d\n", n_bytes);
@@ -279,8 +279,8 @@ void speed_test_write_i2c(int slave_address, int register_address,
         // Grab the start time:
         clock_gettime(CLOCK_MONOTONIC, &start);
 
-        // Read a byte from the slave:
-        ret = write_i2c(slave_address, register_address, data, n_bytes);
+        // Read a byte from the device:
+        ret = write_i2c(device_address, register_address, data, n_bytes);
 
         // Grab the stop time:
         clock_gettime(CLOCK_MONOTONIC, &end);
@@ -336,24 +336,24 @@ void main(void) {
     int speed_grade = I2C_FULL_SPEED;
 
     // Addresses & data to use when testing write:
-    int write_slave_address = 0x1C;     // UPDATE
+    int write_device_address = 0x1C;    // UPDATE
     int write_register_address = 0x21;  // UPDATE
     int write_data[1] = {0x00};         // UPDATE
     int write_bytes = 1;                // UPDATE
     int write_iterations = 10;
 
-    int write_slave_address_multiple = 0x1C;    // UPDATE
+    int write_device_address_multiple = 0x1C;   // UPDATE
     int write_register_address_multiple = 0x23; // UPDATE
     int write_data_multiple[2] = {0x0, 0x0};    // UPDATE
     int write_bytes_multiple = 2;
 
-    int read_slave_address = 0x1C;    // UPDATE
+    int read_device_address = 0x1C;   // UPDATE
     int read_register_address = 0x0F; // UPDATE
     int read_bytes = 1;               // UPDATE
     int read_iterations = 10;
     int read_data[1];                 // UPDATE
 
-    int read_slave_address_multiple = 0x1C;      // UPDATE
+    int read_device_address_multiple = 0x1C;     // UPDATE
     int read_register_address_multiple = 0x28;   // UPDATE
     int read_bytes_multiple = 2;                 // UPDATE
     int read_data_multiple[read_bytes_multiple]; // UPDATE
@@ -371,43 +371,43 @@ void main(void) {
     // Return back useful numbers to know:
     test_get_configs_i2c();
 
-    // Scan I2C bus and identify present slaves:
+    // Scan I2C bus and identify present devices:
     test_scan_bus_i2c();
 
     // Test I2C write one-shot:
-    test_write_i2c_one_byte(write_slave_address, write_register_address,
+    test_write_i2c_one_byte(write_device_address, write_register_address,
                             write_data, write_bytes);
 
     // Test I2C read one-shot:
-    test_read_i2c_one_byte(read_slave_address, read_register_address,
+    test_read_i2c_one_byte(read_device_address, read_register_address,
                            read_data, read_bytes);
 
     // Test iterations of write to see success of consecutive writes:
-    test_write_i2c_iterative(write_slave_address,
+    test_write_i2c_iterative(write_device_address,
                              write_register_address,
                              write_data, write_bytes,
                              write_iterations);
 
     // Test iterations of read to see success of consecutive reads:
-    test_read_i2c_iterative(read_slave_address,
+    test_read_i2c_iterative(read_device_address,
                             read_register_address,
                             read_data, read_bytes,
                             read_iterations);
 
     // Test reading multiple bytes to see success:
-    test_read_i2c_multiple_bytes(read_slave_address_multiple,
+    test_read_i2c_multiple_bytes(read_device_address_multiple,
                                  read_register_address_multiple,
                                  read_data_multiple, read_bytes_multiple);
 
 
     // Test reading multiple bytes to find useful data rate:
-    speed_test_read_i2c(read_slave_address_multiple,
+    speed_test_read_i2c(read_device_address_multiple,
                         read_register_address_multiple,
                         read_data_multiple, read_bytes_multiple, 
                         read_bytes_multiple*2);
 
-    // Test writing multiple bytes to find effectve data rate:
-    speed_test_write_i2c(write_slave_address_multiple,
+    // Test writing multiple bytes to find effective data rate:
+    speed_test_write_i2c(write_device_address_multiple,
                          write_register_address_multiple,
                          write_data_multiple, write_bytes_multiple, 
                          write_bytes_multiple*2);

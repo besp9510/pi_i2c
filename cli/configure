@@ -1,0 +1,86 @@
+#!/bin/sh
+
+# Inter-Integrated Circuit (I2C) Library for the Raspberry Pi
+#
+# Copyright (c) 2021 Benjamin Spencer
+# ============================================================================
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+# =============================================================================
+
+# Defaults:
+libdir=/usr/local/lib/
+prefix=/usr/local
+debugsym=false
+debuglog=false
+
+# Loop through each input:
+for arg in "$@"; do
+    # Switch based on input:
+    case "$arg" in
+    # Prefix directory for install:
+    --prefix=*)
+        prefix=`echo $arg | sed 's/--prefix=//'`
+        ;;
+
+    # Prefix directory for install:
+    --lib-dir=*)
+        libdir=`echo $arg | sed 's/--lib-dir=//'`
+        ;;
+
+    # Debug symbols
+    --enable-debug-sym)
+        debugsym=true;;
+
+    # Help options
+    --help)
+        echo 'Usage: ./configure [options]'
+        echo 'Options:'
+        echo '  --lib-dir=<path>: Library installation directory if not /usr/local/lib/'
+        echo '  --prefix=<path>: Installation directory prefix'
+        echo '  --enable-debug-sym: Include compilation debug symbols'
+        echo 'All invalid options are silently ignored'
+        exit 0
+        ;;
+    esac
+done
+
+echo 'Generating Makefile'
+
+# Append:
+echo '# Configuration:' > Makefile
+echo "PREFIX := $prefix" >> Makefile
+echo "PREFIX := $prefix"
+
+# Append:
+echo "LIBDIR := -L$libdir" >> Makefile
+echo "LIBDIR := -L$libdir"
+
+# Append if set:
+if $debugsym; then
+    # Append:
+    echo 'DEBUG_SYM := -g' >> Makefile
+    echo 'DEBUG_SYM := -g'
+fi
+
+# Append Makefile
+echo ' ' >> Makefile
+cat Makefile.in >> Makefile
+
+echo 'Configuration complete'
+echo 'Ready to use Makefile'

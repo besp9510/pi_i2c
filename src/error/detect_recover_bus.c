@@ -44,7 +44,7 @@ int detect_recover_bus(void) {
         return 0;
     }
 
-    // Detect if only SDA line is held low which indicates master and slave
+    // Detect if only SDA line is held low which indicates controller and device
     // are out of sync for some reason. Resolution is to issue 9 clock cycles
     // and check if SDA line is released.
     if (!(gpio_read_level(sda_gpio_pin)) && gpio_read_level(scl_gpio_pin)) {
@@ -69,7 +69,7 @@ int detect_recover_bus(void) {
                 return ret;
             }
 
-            // Check that SDA lines has been released by the slave:
+            // Check that SDA lines has been released by the device:
             if (gpio_read_level(sda_gpio_pin)) {
                 // Keep track of statistics for any caller interested in those
                 // kind of numbers:
@@ -79,16 +79,16 @@ int detect_recover_bus(void) {
             }
         }
 
-        // SDA line still not released by the slave. Power cycle if possible!
+        // SDA line still not released by the device. Power cycle if possible!
 
         // Keep track of statistics for any caller interested in those
         // kind of numbers:
-        statistics.num_slave_hung++;
+        statistics.num_device_hung++;
 
-        return -ESLAVEHUNG;
+        return -EDEVICEHUNG;
     }
 
-    // Detect if only SCL line is held low which indicates slave has most
+    // Detect if only SCL line is held low which indicates the device has most
     // likely become unresponsive. Resolution is to power cycle device if
     // possible!
     if (gpio_read_level(sda_gpio_pin) && !(gpio_read_level(scl_gpio_pin))) {
@@ -99,9 +99,9 @@ int detect_recover_bus(void) {
         return -ECLKTIMEOUT;
     }
 
-    // Detect if SDA and SCL lines are held low by the slave which indicates
-    // that the bus is completely locked up. Resolution is power cycle device
-    // if possible!
+    // Detect if SDA and SCL lines are held low by the device which indicates
+    // that the bus is completely locked up. Resolution is power cycle the
+    // device if possible!
     if (!(gpio_read_level(sda_gpio_pin)) && !(gpio_read_level(scl_gpio_pin))) {
         // Keep track of statistics for any caller interested in those
         // kind of numbers:

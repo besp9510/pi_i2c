@@ -27,22 +27,22 @@
 
 // Error numbers:
 #define ENOPIVER 140    // Could not get PI board revision
-#define ENACK 141       // Slave did not acknowledge slave address
-#define EBADXFR 142     // Slave did not acknowledge during byte transfer
+#define ENACK 141       // Device did not acknowledge device address
+#define EBADXFR 142     // Device did not acknowledge during byte transfer
                         // (read or write)
-#define EBADREGADDR 143 // Slave did not acknowledge register address
-#define ECLKTIMEOUT 144 // Slave not responsive after clock stretch timeout
+#define EBADREGADDR 143 // Device did not acknowledge register address
+#define ECLKTIMEOUT 144 // Device not responsive after clock stretch timeout
 #define EI2CNOTCFG 145  // pi_i2c has not yet been configured
-#define ENACKRST 146    // Slave did not respond after repeated start slave
+#define ENACKRST 146    // Device did not respond after repeated start device
                         // address (read)
 #define EBUSLOCKUP 147  // Bus is locked: SDA and SCL lines are being held low
-                        // by slave
+                        // by device
 #define EBUSUNKERR 148  // Bus is in an unexpected state following an unknown
                         // error
 #define EFAILSTCOND 149 // Failed to write a START condition to the bus. Most
                         // likely cause is previously seen bus error occurring
                         // during STOP condition.
-#define ESLAVEHUNG 150  // Slave forcing SDA line low
+#define EDEVICEHUNG 150 // Device forcing SDA line low
 
 // Structure definitions:
 struct pi_i2c_statistics {
@@ -60,7 +60,7 @@ struct pi_i2c_statistics {
     int num_bus_lockups;
     int num_failed_start_cond;
     int num_failed_stop_cond;
-    int num_slave_hung;
+    int num_device_hung;
     int num_clock_stretching_timeouts;
     int num_clock_stretch;
 };
@@ -78,9 +78,9 @@ struct pi_i2c_configs {
 // I2C function prototypes:
 int config_i2c(unsigned int sda, unsigned int scl, unsigned int speed_grade);
 int scan_bus_i2c(int *address_book);
-int write_i2c(unsigned int slave_address, unsigned int register_address,
+int write_i2c(unsigned int device_address, unsigned int register_address,
               int *data, unsigned int n_bytes);
-int read_i2c(unsigned int slave_address, unsigned int register_address,
+int read_i2c(unsigned int device_address, unsigned int register_address,
              int *data, unsigned int n_bytes);
 int reset_i2c(void);
 struct pi_i2c_statistics get_statistics_i2c(void);

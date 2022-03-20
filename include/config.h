@@ -35,11 +35,11 @@
 
 #define CLOCK_STRETCHING_TIMEOUT_US 500e3 // Clock stretching timeout [micro seconds]
 
-#define ACK 0  // Slave ACK
-#define NACK 1 // Slave NACK
+#define ACK 0  // device ACK
+#define NACK 1 // device NACK
 
-#define WRITE_FLAG 0 // Master write
-#define READ_FLAG 1  // Master read
+#define WRITE_FLAG 0 // Controller write
+#define READ_FLAG 1  // Controller read
 
 #define CONTINUE_FLAG 0 // No STOP condition at end of write
 #define STOP_FLAG 1     // STOP condition at end of write

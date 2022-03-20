@@ -81,11 +81,11 @@ def scan_bus_i2c():
 
 
 # Wrapper for write_i2c()
-def write_i2c(slave_address, register_address, data, n_bytes):
+def write_i2c(device_address, register_address, data, n_bytes):
     ''' Write variable number of bytes to an I2C device's register address'''
 
-    if not isinstance(slave_address, int):
-        raise TypeError("Slave address must be an int")
+    if not isinstance(device_address, int):
+        raise TypeError("Device address must be an int")
 
     if not isinstance(register_address, int):
         raise TypeError("Register address must be an int")
@@ -115,18 +115,18 @@ def write_i2c(slave_address, register_address, data, n_bytes):
         data = data.astype(int)
         data_pointer = data.ctypes.data_as(ctypes.POINTER(ctypes.c_int))
 
-    errno = libpii2c.write_i2c(ctypes.c_uint(int(slave_address)),
+    errno = libpii2c.write_i2c(ctypes.c_uint(int(device_address)),
                                ctypes.c_uint(int(register_address)), data_pointer,
                                ctypes.c_uint(int(n_bytes)))
     check_errno(errno)
 
 
 # Wrapper for scan_bus_i2c()
-def read_i2c(slave_address, register_address, n_bytes):
+def read_i2c(device_address, register_address, n_bytes):
     ''' Read variable number of bytes from an I2C devices's register address'''
 
-    if not isinstance(slave_address, int):
-        raise TypeError("Slave address must be an int")
+    if not isinstance(device_address, int):
+        raise TypeError("Device address must be an int")
 
     if not isinstance(register_address, int):
         raise TypeError("Register address must be an int")
@@ -138,7 +138,7 @@ def read_i2c(slave_address, register_address, n_bytes):
     data = np.zeros((n_bytes,), dtype=int)
     data_pointer = data.ctypes.data_as(ctypes.POINTER(ctypes.c_int))
 
-    errno = libpii2c.read_i2c(ctypes.c_uint(int(slave_address)),
+    errno = libpii2c.read_i2c(ctypes.c_uint(int(device_address)),
                               ctypes.c_uint(int(register_address)), data_pointer,
                               ctypes.c_uint(int(n_bytes)))
     check_errno(errno)

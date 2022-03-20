@@ -42,19 +42,19 @@ int support_clock_stretching(void) {
     microsleep_hard(scl_response_time_us);
 
     // Check if SCL line has actually gone high after it was released; if not,
-    // slave has requested clock stretching:
+    // device has requested clock stretching:
     if (!(gpio_read_level(scl_gpio_pin))) {
         // Keep track of statistics for any caller interested in those
         // kind of numbers:
         statistics.num_clock_stretch++;
 
         // Wait for SCL to go high within the timeout period; if it goes
-        // high, then slave is ready for master to continue.
+        // high, then device is ready for controller to continue.
         while ((clock_stretching_elapsed_us < CLOCK_STRETCHING_TIMEOUT_US)) {
-            // Wait for slave to release SCL line:
+            // Wait for device to release SCL line:
             microsleep_hard(clock_stretching_sleep_us);
 
-            // If SCL line has been released then master can continue:
+            // If SCL line has been released then controller can continue:
             if (gpio_read_level(scl_gpio_pin)) {
                 return 0;
             }
@@ -63,7 +63,7 @@ int support_clock_stretching(void) {
             clock_stretching_elapsed_us += (clock_stretching_sleep_us);
         }
 
-        // Slave has not responded within the timeout!
+        // Device has not responded within the timeout!
 
         // Keep track of statistics for any caller interested in those
         // kind of numbers:

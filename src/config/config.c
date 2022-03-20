@@ -68,7 +68,7 @@ struct pi_i2c_statistics statistics = {
     .num_bus_lockups = 0,
     .num_failed_start_cond = 0,
     .num_failed_stop_cond = 0,
-    .num_slave_hung = 0,
+    .num_device_hung = 0,
     .num_clock_stretch = 0
 };
 

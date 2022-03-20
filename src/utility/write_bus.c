@@ -76,19 +76,19 @@ int write_byte_to_bus(int byte) {
         gpio_set_mode(GPIO_OUTPUT, scl_gpio_pin);
     }
 
-    // Release SDA line so that slave can ACK or NACK data transfer:
+    // Release SDA line so that device can ACK or NACK data transfer:
     gpio_set_mode(GPIO_INPUT, sda_gpio_pin);
 
     // Previously ended a clock cycle so we must elapse SCL low period:
     microsleep_hard(scl_t_low_sleep_us);
 
-    // Slave will have ACK'd by now; let's set SCL to read off pin:
+    // Device will have ACK'd by now; let's set SCL to read off pin:
     gpio_set_mode(GPIO_INPUT, scl_gpio_pin);
 
     // Adhere to UM10204 I2C-bus specification 3.1.9:
     support_clock_stretching();
 
-    // Determine if slave ACK'd data transfer by reading pin value
+    // Determine if device ACK'd data transfer by reading pin value
     //     ACK = 1: NACK
     //     ACK = 0: ACK
     sda_level = gpio_read_level(sda_gpio_pin);
@@ -98,15 +98,15 @@ int write_byte_to_bus(int byte) {
     // End clock pulse by clearing SCL:
     gpio_set_mode(GPIO_OUTPUT, scl_gpio_pin);
 
-    // Reclaim SDA line as slave is done using it:
+    // Reclaim SDA line as device is done using it:
     gpio_set_mode(GPIO_OUTPUT, sda_gpio_pin);
 
     return sda_level;
 }
 
-int write_address_frame_to_bus(int slave_address, int write_flag) {
+int write_address_frame_to_bus(int device_address, int write_flag) {
     // Definitions:
-    int slave_address_write_flag_byte;
+    int device_address_write_flag_byte;
     int write_status;
 
     // Some magic to allow the write_byte function to write both the 7-bit
@@ -116,10 +116,10 @@ int write_address_frame_to_bus(int slave_address, int write_flag) {
     //    0 X X X X X X X
     // || F 0 0 0 0 0 0 0 (RW Flag << 8)
     //  = F X X X X X X X
-    slave_address_write_flag_byte = (slave_address << 1) | (write_flag);
+    device_address_write_flag_byte = (device_address << 1) | (write_flag);
 
-    // Begin message by addressing slave at input address for read/write:
-    write_status = write_byte_to_bus(slave_address_write_flag_byte);
+    // Begin message by addressing device at input address for read/write:
+    write_status = write_byte_to_bus(device_address_write_flag_byte);
 
     return write_status;
 }
@@ -128,7 +128,7 @@ int write_data_frame_to_bus(int data) {
     // Definitions:
     int write_status;
 
-    // Begin message by addressing slave at input address for read/write:
+    // Begin message by addressing device at input address for read/write:
     write_status = write_byte_to_bus(data);
 
     return write_status;

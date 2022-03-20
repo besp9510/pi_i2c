@@ -42,24 +42,24 @@ def test_scan_bus_i2c():
     print("Test complete")
 
 
-def test_write_i2c_one_bytes(slave_address, register_address, data, n_bytes):
+def test_write_i2c_one_bytes(device_address, register_address, data, n_bytes):
     print("Testing write_i2c()")
 
-    print("slave_address = 0x%X" % slave_address)
+    print("device_address = 0x%X" % device_address)
     print("register_address = 0x%X" % register_address)
     print("data = 0x%X" % data)
     print("n_bytes = %d" % n_bytes)
 
-    pi_i2c.write_i2c(slave_address, register_address, data, n_bytes)
+    pi_i2c.write_i2c(device_address, register_address, data, n_bytes)
 
     print("write_i2c() has returned")
     print("Test complete")
 
 
-def test_write_i2c_multiple_bytes(slave_address, register_address, data, n_bytes):
+def test_write_i2c_multiple_bytes(device_address, register_address, data, n_bytes):
     print("Testing write_i2c()")
 
-    print("slave_address = 0x%X" % slave_address)
+    print("device_address = 0x%X" % device_address)
     print("register_address = 0x%X" % register_address)
 
     for i in range(0, len(data)):
@@ -67,20 +67,20 @@ def test_write_i2c_multiple_bytes(slave_address, register_address, data, n_bytes
 
     print("n_bytes = %d" % n_bytes)
 
-    pi_i2c.write_i2c(slave_address, register_address, data, n_bytes)
+    pi_i2c.write_i2c(device_address, register_address, data, n_bytes)
 
     print("write_i2c() has returned")
     print("Test complete")
 
 
-def test_read_i2c_one_byte(slave_address, register_address, n_bytes):
+def test_read_i2c_one_byte(device_address, register_address, n_bytes):
     print("Testing read_i2c()")
 
-    print("slave_address = 0x%X" % slave_address)
+    print("device_address = 0x%X" % device_address)
     print("register_address = 0x%X" % register_address)
     print("n_bytes = %d" % n_bytes)
 
-    read_data = pi_i2c.read_i2c(slave_address, register_address, n_bytes)
+    read_data = pi_i2c.read_i2c(device_address, register_address, n_bytes)
 
     print("read_i2c() has returned")
 
@@ -88,14 +88,14 @@ def test_read_i2c_one_byte(slave_address, register_address, n_bytes):
     print("Test complete")
 
 
-def test_read_i2c_multiple_bytes(slave_address, register_address, n_bytes):
+def test_read_i2c_multiple_bytes(device_address, register_address, n_bytes):
     print("Testing read_i2c()")
 
-    print("slave_address = 0x%X" % slave_address)
+    print("device_address = 0x%X" % device_address)
     print("register_address = 0x%X" % register_address)
     print("n_bytes = %d" % n_bytes)
 
-    read_data = pi_i2c.read_i2c(slave_address, register_address, n_bytes)
+    read_data = pi_i2c.read_i2c(device_address, register_address, n_bytes)
 
     print("read_i2c() has returned")
 
@@ -131,14 +131,14 @@ scl_pin = 3  # UPDATE
 speed_grade = pi_i2c.I2C_FULL_SPEED
 
 # Addresses & data to use when testing write:
-write_slave_address = 0x1C  # UPDATE
+write_device_address = 0x1C  # UPDATE
 write_register_address = 0x21  # UPDATE
 write_data_int = 0x0  # UPDATE
 write_bytes_int = 1  # UPDATE
 write_data_array = np.array([0x0, 0x0, 0x0], dtype=int)  # UPDATE
 write_bytes_array = 3  # UPDATE
 
-read_slave_address = 0x1C  # UPDATE
+read_device_address = 0x1C  # UPDATE
 read_register_address = 0x0F  # UPDATE
 read_bytes_int = 1  # UPDATE
 read_bytes_array = 3  # UPDATE
@@ -155,20 +155,20 @@ pi_i2c.config_i2c(sda_pin, scl_pin, speed_grade)
 # Return back useful numbers to know:
 test_get_configs_i2c()
 
-# Scan I2C bus and identify present slaves:
+# Scan I2C bus and identify present devices:
 test_scan_bus_i2c()
 
 # Test I2C write with one byte:
-test_write_i2c_one_bytes(write_slave_address, write_register_address, write_data_int, write_bytes_int)
+test_write_i2c_one_bytes(write_device_address, write_register_address, write_data_int, write_bytes_int)
 
 # Test I2C write with multiple bytes:
-test_write_i2c_multiple_bytes(write_slave_address, write_register_address, write_data_array, write_bytes_array)
+test_write_i2c_multiple_bytes(write_device_address, write_register_address, write_data_array, write_bytes_array)
 
 # Test I2C read with one byte:
-test_read_i2c_one_byte(read_slave_address, read_register_address, read_bytes_int)
+test_read_i2c_one_byte(read_device_address, read_register_address, read_bytes_int)
 
 # Test I2C read with multiple bytes:
-test_read_i2c_multiple_bytes(read_slave_address, read_register_address, read_bytes_array)
+test_read_i2c_multiple_bytes(read_device_address, read_register_address, read_bytes_array)
 
 # Test get statistics following all of the test calls:
 test_get_statistics_i2c()

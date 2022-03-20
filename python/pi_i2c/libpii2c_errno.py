@@ -65,7 +65,7 @@ class EFAILSTCONDError(Exception):
     pass
 
 
-class ESLAVEHUNGError(Exception):
+class EdeviceHUNGError(Exception):
     pass
 
 
@@ -79,24 +79,24 @@ class MAP_FAILEDError(Exception):
 # Error numbers:
 libpii2c_errno_list = [
     {"errno": "ENOPIVER", "value": 140, "raise": ENOPIVERError, "message": "Could not get PI board revision"},
-    {"errno": "ENACK", "value": 141, "raise": ENACKError, "message": "Slave did not acknowledge slave address"},
+    {"errno": "ENACK", "value": 141, "raise": ENACKError, "message": "Device did not acknowledge device address"},
     {"errno": "EBADXFR", "value": 142, "raise": EBADXFRError,
-     "message": "Slave did not acknowledge during byte transfer (read or write)"},
+     "message": "Device did not acknowledge during byte transfer (read or write)"},
     {"errno": "EBADREGADDR", "value": 143, "raise": EBADREGADDRError,
-     "message": "Slave did not acknowledge register address"},
+     "message": "Device did not acknowledge register address"},
     {"errno": "ECLKTIMEOUT", "value": 144, "raise": ECLKTIMEOUTError,
-     "message": "Slave not responsive after clock stretch timeoutp"},
+     "message": "Device not responsive after clock stretch timeoutp"},
     {"errno": "EI2CNOTCFG", "value": 145, "raise": EI2CNOTCFGError, "message": "pi_i2c has not yet been configured"},
     {"errno": "ENACKRST", "value": 146, "raise": ENACKRSTError,
-     "message": "Slave did not respond after repeated start slave address (read)"},
+     "message": "Device did not respond after repeated start device address (read)"},
     {"errno": "EBUSLOCKUP", "value": 147, "raise": EBUSLOCKUPError,
-     "message": "Bus is locked: SDA and SCL lines are being held low by slave"},
+     "message": "Bus is locked: SDA and SCL lines are being held low by device"},
     {"errno": "EBUSUNKERR", "value": 148, "raise": EBUSUNKERRError,
      "message": "Bus is in an unexpected state following an unknown error"},
     {"errno": "EFAILSTCOND", "value": 149, "raise": EFAILSTCONDError,
      "message": "Failed to write a START condition to the bus. Most likely cause is previously seen bus " +
      "error occurring during STOP condition."},
-    {"errno": "ESLAVEHUNG", "value": 150, "raise": ESLAVEHUNGError, "message": "Slave forcing SDA line low"},
+    {"errno": "EdeviceHUNG", "value": 150, "raise": EdeviceHUNGError, "message": "Device forcing SDA line low"},
     {"errno": "EINVAL", "value": 22, "raise": EINVALError, "message": "Invalid argument"},
     {"errno": "MAP_FAILED", "value": 1, "raise": MAP_FAILEDError,
      "message": "Memory map failed (most likely due to permissions)"}]

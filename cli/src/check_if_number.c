@@ -1,6 +1,8 @@
 // Inter-Integrated Circuit (I2C) Library for the Raspberry Pi
 //
-// Copyright (c) 2021 Benjamin Spencer
+// ... but this time in the CLI
+//
+// Copyright (c) 2022 Benjamin Spencer
 // ============================================================================
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -21,7 +23,20 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 // ============================================================================
 
-// Write function prototypes:
-int write_byte_to_bus(int byte);
-int write_address_frame_to_bus(int device_address, int write_flag);
-int write_data_frame_to_bus(int data);
+// Include C standard libraries:
+#include <stdlib.h> // C Standard library
+#include <string.h> // C Standard string manipulation libary
+
+// Include C POSIX libraries:
+#include <ctype.h>  // C compatible data types
+
+// Check if a string only contains numbers
+int check_if_number(char *optarg) {
+    while(*optarg) {
+        if (isdigit(*optarg++) == 0) {
+            return 0;
+        }
+    }
+
+    return 1;
+}

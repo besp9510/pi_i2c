@@ -37,7 +37,7 @@ class pi_i2c_statistics(ctypes.Structure):
                 ('num_badxfr', ctypes.c_int), ('num_bus_resets', ctypes.c_int),
                 ('num_unknown_bus_errors', ctypes.c_int), ('num_bus_lockups', ctypes.c_int),
                 ('num_failed_start_cond', ctypes.c_int), ('num_failed_stop_cond', ctypes.c_int),
-                ('num_slave_hung', ctypes.c_int), ('num_clock_stretching_timeouts', ctypes.c_int),
+                ('num_device_hung', ctypes.c_int), ('num_clock_stretching_timeouts', ctypes.c_int),
                 ('num_clock_stretch', ctypes.c_int)]
 
 

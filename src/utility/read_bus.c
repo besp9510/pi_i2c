@@ -40,7 +40,7 @@ int read_byte_from_bus(int ack_flag) {
 
     int sda_level;
 
-    // Release SDA line for the slave to use:
+    // Release SDA line for the device to use:
     gpio_set_mode(GPIO_INPUT, sda_gpio_pin);
 
     // Read byte from bus starting at MSB:
@@ -70,9 +70,9 @@ int read_byte_from_bus(int ack_flag) {
     }
 
     // If the SDA line has not yet been released then we assume that
-    // the slave is unresponsive and now need to recover the bus:
+    // the device is unresponsive and now need to recover the bus:
     if (!(gpio_read_level(sda_gpio_pin))) {
-        return -ESLAVEHUNG;
+        return -EDEVICEHUNG;
     }
 
     // ACK if flag is set so more data can be from the bus; otherwise,
