@@ -12,17 +12,19 @@ They are not required to compile pi_i2c.c into a shared library but are required
 
 ![gpio](images/i2c.png)
 
-pi_i2c.c is provided three ways for flexibility:
+pi_i2c.c is provided four ways for flexibility:
 1. C source and header files that can be compiled along with your program
 2. C shared library
 3. Python package
     * Interface with pi_i2c.c using Python 3!
+4. A Bash executable
+    * Interface with pi_i2c.c using the CLI!
 
 A test script is included in this repository to checkout the library working on your Pi. You can also checkout this [LIS3MDL example](https://github.com/besp9510/pi_lis3mdl_example) I wrote to test out the library on a specific device.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. These steps will configure, make, install, and provide instructions on uninstall for the C shared library, python package, and Bash executable.
 
 ### Installing
 
@@ -46,6 +48,19 @@ $ ./configure
 
 By default, files will be installed under `/usr/local/`. Note that passing the option ``--help`` will display available configuration options such as installation directory prefix and debug symbols.
 
+Next, navigate to the `cli` directory and run the configure script to generate a Makefile for the Bash executable.
+
+```
+$ cd cli
+$ ./configure
+```
+
+Return to the top directory after doing so.
+
+```
+$ cd ../
+```
+
 #### Make
 
 Compile pi_i2c.c into a shared library.
@@ -60,7 +75,20 @@ Then install files to the installation directory. You must run the following eit
 $ sudo make install
 ```
 
-To use pi_i2c.c in your project, simply include the header file `pi_i2c.h` and link to the shared library `-lpii2c`, `-lpilwgpio`, & `-lpimicrosleephard`. 
+Next, navigate to the `cli` directory to compile the Bash executable.
+
+```
+$ cd cli/
+$ make
+```
+
+Then install files to the installation directory.
+
+```
+$ make install
+```
+
+To use pi_i2c.c in your project, simply include the header file `pi_i2c.h` and link to the shared library `-lpii2c`, `-lpilwgpio`, & `-lpimicrosleephard`. See the test script's `test_pi_i2c.c` Makefile under the `test/` directory as a example. 
 
 **If using the Pi's default SDA & SCL pins (BCM pin 2 & 3), ensure that Raspian I2C interface is disabled via rasp-config or otherwise risk unpredictable behavior!**
 
@@ -340,7 +368,7 @@ Error numbers:
 
 #### Get Statistics
 
-Return a structure of statistics recorded by Pi I2C.
+Return a structure of statistics recorded by pi_i2c.c.
 
 ```c
 struct pi_i2c_statistics get_statistics_i2c(void);
@@ -351,7 +379,7 @@ struct pi_i2c_statistics get_statistics_i2c(void);
 
 #### Get Configs
 
-Return a structure of internal configurations of Pi I2C.
+Return a structure of internal configurations of pi_i2c.c.
 
 ```c
 struct pi_i2c_configs get_configs_i2c(void);
@@ -359,6 +387,99 @@ struct pi_i2c_configs get_configs_i2c(void);
 
 ##### Return Value
 `get_configs_i2c()` always returns 0 upon success.
+
+### Bash Executable
+The bash executable version of pi_i2c is a CLI interface with the C shared library of pi_i2c.c. This executable takes in options and arguments that are then passed to the respective pi_i2c.c functions (defined above). Output is then directed back to the terminal. This interface is useful for one-off debugging, inspections, or any time it makes sense to interact with a device on a more impromptu basis.
+
+The following is the usage statement printed anytime `pi_i2c` is invoked with the help option. By default, the executable is installed to the `usr/local/bin/` directory which should be on your `$PATH` environmental variable. `pi_i2c` will be callable from any directory if that is the case.
+
+```
+$ pi_i2c --help
+Usage: pi_i2c [OPTIONS]
+Inter-Integrated Circuit (I2C) Library for the Raspberry Pi
+
+Examples:
+  pi_i2c --sda 2 --scl 3 -- speed-grade i2c_standard_mode --scan
+  pi_i2c -r --sda 2 --scl 3 --speed-grade 400 --device 0x1C --register 0x23 --bytes 2
+  pi_i2c -w --sda 2 --scl 3 --speed-grade 100 --device 0x3D --register 0x01 --bytes 1 --data 0xFF,0x1C
+  pi_i2c -r -a 2 -c 3 -g i2c_full_speed -e 0x70 -i 0x0 -n 1
+  pi_i2c -w -a 2 -c 3 -g 400 -e 0x70 -i 0x0 -n 1 -d 0x8F
+
+Main operation mode:
+  -r, --read         read N bytes from a device and register address
+  -w, --write        write N bytes from a device and register address
+  -a, --sda          GPIO pin to use for the SDA line (BCM numbering)
+  -c, --scl          GPIO pin to use for the SCL line (BCM numbering)
+  -g, --speed-grade  I2C bus speed grade (bit rate) as defined by pi_i2c.h
+                     valid speed grades are i2c_standard_mode (100) or i2c_full_speed (400)
+  -e, --device       device I2C address as a hex number (e.g., 0xFF)
+  -i, --register     device's register address read from or written as a hex number (e.g., 0xFF)
+  -s, --scan         scan the bus for any I2C devices
+  -n, --n-bytes      number of bytes to read or write to the device's register address
+  -d, --data         data to write to the device's register address in a comma delimited list
+                     data type is hex (e.g., 0xFF)
+  -v, --debug        display useful information
+  -h, --help         display this help and exit
+
+User's notes:
+  - If using the --scan option, device, register, n_bytes, data, read, and write options are silently ignored
+
+Need any help? find a bug? Checkout https://github.com/besp9510/pi_i2c
+```
+
+*Note, data read from a device is only printed to the terminal.*
+
+Examples:
+
+#### I2C Bus Scan
+
+```
+$ pi_i2c -a 2 -c 3 -g i2c_full_speed -s
+```
+
+A table is printed along with a list of detected devices.
+
+```
+pi_i2c: I2C bus scan completed
+    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
+00  x  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+10  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+20  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+30  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+40  x  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+50  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+60  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+70  x  x  x  -  x  -  -  -  -  -  -  -  -  -  -  -
+devices detected at [0x0, 0x40, 0x70, 0x71, 0x72, 0x74]
+```
+
+#### Write
+
+```
+$ pi_i2c -w -a 2 -c 3 -g 400 -n 1 -e 0x70 -i 0x0 -d 0x2F
+```
+
+Data written to registers is echo'd to the terminal. Then, the registers are read to confirm successful write and their contents are printed to the terminal.
+
+```
+pi_i2c: wrote 1 byte(s) to device 0x70 at register 0x0
+pi_i2c: wrote data = [0x2F]
+pi_i2c: reading back 1 byte(s) from device 0x70 at register 0x0
+pi_i2c: register values = [0x2F]
+```
+
+#### Read
+
+```
+$ pi_i2c -r -a 2 -c 3 -g i2c_full_speed -e 0x70 -i 0x0 -n 6
+```
+
+The data read from the registers are printed to the terminal.
+
+```
+pi_i2c: reading 6 byte(s) from device 0x70 at register 0x0
+pi_i2c: register values = [0x2F, 0x4, 0xE2, 0xE4, 0xE8, 0xE0]
+```
 
 ## Contributing
 Follow the "fork-and-pull" Git workflow.

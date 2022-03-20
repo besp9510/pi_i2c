@@ -35,36 +35,14 @@
 
 // Include header files:
 #include "parse_data.h"      // Parse input string list of hex numbers
-                             // into an integer array
+                             // delimited by a comma into an int array
 #include "check_if_number.h" // Check if a string only contains numbers
+#include "scan_option.h"     // Scan the I2C bus and print the results
+                             // nicely to the terminal
+#include "help_option.h"     // The lovely help message
 #include <pi_i2c.h>          // Pi I2C library!
 
 #define MAX_DATA_BYTES 100 // The maximum number of bytes to write (arbritary)
-
-// The lovely help message
-static void help(void) {
-    printf("Usage: pi_i2c [OPTIONS] \n");
-    printf("Inter-Integrated Circuit (I2C) Library for the Raspberry Pi\n\n");
-
-    printf("Examples:\n");
-    printf("  pi_i2c --sda 2 --scl 3 -- speed-grade i2c_standard_mode --scan\n");
-    printf("  pi_i2c -r --sda 2 --scl 3 --speed-grade 400 --device 0x1C --register 0x23 --bytes 2\n");
-    printf("  pi_i2c -w --sda 2 --scl 3 --speed-grade 100 --device 0x3D --register 0x01 --bytes 1 --data 0xFF,0x1C\n");
-    printf("\n");
-
-    printf("Main operation mode:\n");
-    printf("  -r, --read         read N bytes from a device and register address\n");
-    printf("  -w, --write        write N bytes from a device and register address\n");
-    printf("  -a, --sda          GPIO pin to use for the SDA line (BCM numbering)\n");
-    printf("  -c, --scl          GPIO pin to use for the SCL line (BCM numbering)\n");
-    printf("  -g, --speed-grade  I2C bus speed grade (bit rate) as defined by pi_i2c.h\n");
-    printf("                     valid speed grades are i2c_standard_mode (100) or i2c_full_speed (400)\n");
-    printf("  -n, --n-bytes      number of bytes to read or write to the device's register address\n");
-    printf("  -d, --data         data to write to the device's register address in a comma delimited list\n");
-    printf("                     data type is hex (0xNN)\n");
-    printf("  -v, --verbose      display logs and other useful information\n");
-    printf("  -h, --help         display this help and exit\n");
-}
 
 int main(int argc, char **argv) {
     char *base;
@@ -75,21 +53,25 @@ int main(int argc, char **argv) {
     unsigned int speed_grade = 0;
     unsigned int n_bytes = 0;
     char *data_string = NULL;
+    char *device_string = NULL;
+    char *register_string = NULL;
 
+    char temp_string[20];
+
+    int data_read[MAX_DATA_BYTES];   // Cannot read more data than this
     int data_parsed[MAX_DATA_BYTES]; // Cannot write more data than this
+    int device_register_parsed[2];   // Cannot write to more than one
+                                     // device and one regiter at a time
 
-    int address_book[127];
-
-    unsigned int n_bytes_parsed;
+    int n_bytes_parsed = 0;
 
     int getopt_ret;
     int option_index = 0;
 
     int i;
-    int j;
     int ret;
 
-    int verbose = 0;
+    int debug = 0;
     int write = 0;
     int read = 0;
     int scan = 0;
@@ -99,25 +81,27 @@ int main(int argc, char **argv) {
         {"help",        no_argument,       NULL, 'h'},
         {"sda",         required_argument, NULL, 'a'},
         {"scl",         required_argument, NULL, 'c'},
-        {"verbose",     no_argument,       NULL, 'v'},
+        {"debug",       no_argument,       NULL, 'v'},
         {"speed-grade", required_argument, NULL, 'g'},
         {"n-bytes",     required_argument, NULL, 'n'},
         {"read",        no_argument,       NULL, 'r'},
         {"write",       no_argument,       NULL, 'w'},
         {"data",        required_argument, NULL, 'd'},
         {"scan",        no_argument,       NULL, 's'},
+        {"device",      required_argument, NULL, 'e'},
+        {"register",    required_argument, NULL, 'i'},
         {NULL,          0,                 NULL, 0}
     };
 
     // If no options were passed then give them some help:
     if (argc < 2) {
-        help();
+        help_option();
         return -1;
     }
 
     // Getopt loop (will exit when no more options)
     while (1) {
-        getopt_ret = getopt_long(argc, argv, "-:ha:c:vg:n:rwd:",
+        getopt_ret = getopt_long(argc, argv, "-:ha:c:vg:n:rwd:se:i:",
                                  long_options, &option_index);
 
         if (getopt_ret == -1)
@@ -130,7 +114,8 @@ int main(int argc, char **argv) {
                 if (check_if_number(optarg)) {
                     sda_gpio_pin = strtol(optarg, &base, 10);
                 } else {
-                    printf("pi_i2c: --sda option must be a number within 0 and 31\n");
+                    printf("pi_i2c: --sda option must be a number within " \
+                           "0 and 31\n");
                     printf("pi_i2c: error is not recoverable; exiting now\n");
                     return -1;
                 }
@@ -143,7 +128,8 @@ int main(int argc, char **argv) {
                 if (check_if_number(optarg)) {
                     scl_gpio_pin = strtol(optarg, &base, 10);
                 } else {
-                    printf("pi_i2c: --scl option must be a number within 0 and 31\n");
+                    printf("pi_i2c: --scl option must be a number within " \
+                           "0 and 31\n");
                     printf("pi_i2c: error is not recoverable; exiting now\n");
                     return -1;
                 }
@@ -161,7 +147,8 @@ int main(int argc, char **argv) {
                 } else if (strcmp(optarg, "i2c_full_speed") == 0) {
                     speed_grade = I2C_FULL_SPEED;
                 } else {
-                    printf("pi_i2c: --speed-grade option must i2c_standard_mode (100) or i2c_full_speed (400)\n");
+                    printf("pi_i2c: --speed-grade option must " \
+                           "i2c_standard_mode (100) or i2c_full_speed (400)\n");
                     printf("pi_i2c: error is not recoverable; exiting now\n");
                     return -1;
                 }
@@ -193,18 +180,30 @@ int main(int argc, char **argv) {
                 write = 1;
                 break;
 
+            // --scan
             case 's':
                 scan = 1;
                 break;
 
+            // --device
+            case 'e':
+                // Save contents for later parsing:
+                device_string = optarg;
+                break;
+
+            case 'i':
+                // Save contents for later parsing:
+                register_string = optarg;
+                break;
+
             // --help
             case 'h':
-                help();
+                help_option();
                 return 0;
 
-            // --verbose
+            // --debug
             case 'v':
-                verbose = 1;
+                debug = 1;
                 break;
 
             case '?':
@@ -218,72 +217,53 @@ int main(int argc, char **argv) {
                 return -1;
 
             default:
-                help();
+                help_option();
                 return -1;
             }
     }
 
+    // Option argument check prior to any pi_i2c calls. Don't allow any
+    // non-sensical arguments get through so error out if found:
     if (sda_gpio_pin >= 31) {
-        printf("pi_i2c: --sda option must be within 0 and 31\n");
+        printf("pi_i2c: -a, --sda option must be within 0 and 31\n");
         printf("pi_i2c: error is not recoverable; exiting now\n");
         return -1;
     }
 
     if (scl_gpio_pin >= 31) {
-        printf("pi_i2c: --scl option must be within 0 and 31\n");
+        printf("pi_i2c: -c, --scl option must be within 0 and 31\n");
         printf("pi_i2c: error is not recoverable; exiting now\n");
         return -1;
     }
 
     if ((speed_grade != I2C_STANDARD_MODE) && (speed_grade != I2C_FULL_SPEED)) {
-        printf("pi_i2c: --speed-grade option must i2c_standard_mode (100) or i2c_full_speed (400)\n");
+        printf("pi_i2c: -g, --speed-grade option must i2c_standard_mode " \
+               "(100) or i2c_full_speed (400)\n");
         printf("pi_i2c: error is not recoverable; exiting now\n");
         return -1;
     }
 
     // Can configure pi_i2c at this point:
-    if (ret = config_i2c(sda_gpio_pin, scl_gpio_pin, speed_grade) < 0) {
+    if ((ret = config_i2c(sda_gpio_pin, scl_gpio_pin, speed_grade) < 0)) {
         printf("pi_i2c: config_i2c returned an error %d\n", ret);
         printf("pi_i2c: error is not recoverable; exiting now\n");
     };
 
+    // Can scan at this point:
     if (scan) {
-        if (ret = scan_bus_i2c(address_book) < 0) {
+        if ((ret = scan_option() < 0)) {
             printf("pi_i2c: scan_bus_i2c returned an error %d\n", ret);
             printf("pi_i2c: error is not recoverable; exiting now\n");
-            return -1;
+            return ret;
         };
-
-        // Print the scan results in a nice table:
-        printf("    0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F\n");
-        for (i = 0; i < 8; i++) {
-            printf("%d0 ", i);
-
-            for (j = 0; j < 16; j++) {
-                if (address_book[i*16 + j] == 1) {
-                    printf(" x ");
-                } else {
-                    printf(" - ");
-                }
-            }
-            printf("\n");
-        }
-
-        printf("Address detected: [");
-        for (i = 0; i < 127; i+=2) {
-            if (address_book[i] == 1) {
-                printf("0x%X, ", i);
-            }
-        }
-        printf("\b\b]\n");
-
         return 0;
     }
 
     // Option argument check prior to any pi_i2c calls. Don't allow any
     // non-sensical arguments get through so error out if found:
     if ((read && write) || (!read && !write)) {
-        printf("pi_i2c: must choose --read or --write but not both or none\n");
+        printf("pi_i2c: must choose -r, --read or -w, --write but not both " \
+               "or none\n");
         printf("pi_i2c: error is not recoverable; exiting now\n");
         return -1;
     }
@@ -295,27 +275,58 @@ int main(int argc, char **argv) {
     }
 
     if ((write) && (data_string == NULL)) {
-        printf("pi_i2c: must include --data option and provide arguments in a comma delimited list\n");
+        printf("pi_i2c: must include -d, --data option and provide arguments " \
+               "in a comma delimited list\n");
         printf("pi_i2c: error is not recoverable; exiting now\n");
         return -1;
     }
 
-    // Parse input data into an integer array; error out if parsing failed
-    // due to formatting issues:
-    if (!(n_bytes_parsed = parse_data(data_string, data_parsed))) {
-        printf("pi_i2c: --data arguments must be a comma delimited list with proper hex numbers (0xNN)\n");
+    // Parse input data into an integer array if writing; error out if
+    // parsing failed due to formatting issues:
+    if (write) {
+        if (!(n_bytes_parsed = parse_data(data_string, data_parsed))) {
+            printf("pi_i2c: -d, --data arguments must be a comma delimited " \
+                   "list with proper hex numbers (e.g., 0xFF)\n");
+            printf("pi_i2c: error is not recoverable; exiting now\n");
+            return -1;
+        };
+
+        // Error out if number of bytes parsed does not match
+        // the option argument:
+        if (n_bytes_parsed != n_bytes) {
+            printf("pi_i2c: -n, --n-bytes must match the size of the --data " \
+                   "list provided\n");
+            printf("pi_i2c: error is not recoverable; exiting now\n");
+            return -1;
+        }
+    }
+
+    if (device_string == NULL) {
+        printf("pi_i2c: must include -e, --device option\n");
+        printf("pi_i2c: error is not recoverable; exiting now\n");
+        return -1;
+    }
+
+    if (register_string == NULL) {
+        printf("pi_i2c: must include -i, --register option\n");
+        printf("pi_i2c: error is not recoverable; exiting now\n");
+        return -1;
+    }
+
+    // Parse device and register address into an integer array; error out if
+    // parsing failed due to formatting issues:
+    strcpy(temp_string, device_string);
+    strcat(temp_string, ",");
+    strcat(temp_string, register_string);
+
+    if (!(ret = parse_data(temp_string, device_register_parsed))) {
+        printf("pi_i2c: -e, --device and -i, --register arguments must be " \
+               "proper hex numbers (e.g., 0xFF)\n");
         printf("pi_i2c: error is not recoverable; exiting now\n");
         return -1;
     };
 
-    // Error out if number of bytes parsed does not match the option argument:
-    if (n_bytes_parsed != n_bytes) {
-        printf("pi_i2c: --n-bytes must match the size of the --data list provided\n");
-        printf("pi_i2c: error is not recoverable; exiting now\n");
-        return -1;
-    }
-
-    if (verbose) {
+    if (debug) {
         printf("pi_i2c: [OPTIONS]\n");
         printf("  --read        = %d\n", read);
         printf("  --write       = %d\n", write);
@@ -323,13 +334,77 @@ int main(int argc, char **argv) {
         printf("  --scl         = %d\n", scl_gpio_pin);
         printf("  --speed-grade = %d\n", speed_grade);
         printf("  --n-bytes     = %d\n", n_bytes);
-        printf("  --data        = ");
-        for (i = 0; i < n_bytes; i++) {
-            printf("0x%X ", data_parsed[i]);
-        }
-        printf("\n");
+        printf("  --device      = %s\n", device_string);
+        printf("  --register    = %s\n", register_string);
+        printf("  --data        = %s\n", data_string);
         printf("pi_i2c: parsing\n");
+        printf("  data            = [");
+        for (i = 0; i < n_bytes; i++) {
+            printf("0x%X, ", data_parsed[i]);
+        }
+        printf("\b\b]\n");
         printf("  n_bytes_parsed  = %d\n", n_bytes_parsed);
+        printf("  device          = 0x%X\n", device_register_parsed[0]);
+        printf("  register        = 0x%X\n", device_register_parsed[1]);
+    }
+
+    // Read
+    if (read) {
+        if ((ret = read_i2c(device_register_parsed[0],
+                            device_register_parsed[1],
+                            data_read, n_bytes)) < 0) {
+            printf("pi_i2c: read_i2c returned an error %d\n", ret);
+            printf("pi_i2c: error is not recoverable; exiting now\n");
+            return ret;
+        }
+
+        printf("pi_i2c: reading %d byte(s) from device 0x%X at register 0x%X\n",
+                n_bytes, device_register_parsed[0], device_register_parsed[1]);
+
+        // Print out the read data in a nice table:
+        printf("pi_i2c: register values = [");
+        for (i = 0; i < n_bytes; i++) {
+            printf("0x%X, ", data_read[i]);
+        }
+        printf("\b\b]\n");
+    }
+
+    // Write
+    if (write) {
+        if ((ret = write_i2c(device_register_parsed[0],
+                            device_register_parsed[1],
+                            data_parsed, n_bytes)) < 0) {
+            printf("pi_i2c: write_i2c returned an error %d\n", ret);
+            printf("pi_i2c: error is not recoverable; exiting now\n");
+            return ret;
+        }
+
+        printf("pi_i2c: wrote %d byte(s) to device 0x%X at register 0x%X\n",
+               n_bytes, device_register_parsed[0], device_register_parsed[1]);
+        printf("pi_i2c: wrote data = [");
+        for (i = 0; i < n_bytes; i++) {
+            printf("0x%X, ", data_parsed[i]);
+        }
+        printf("\b\b]\n");
+
+        printf("pi_i2c: reading back %d byte(s) from device 0x%X " \
+               "at register 0x%X\n", n_bytes, device_register_parsed[0],
+               device_register_parsed[1]);
+
+        if ((ret = read_i2c(device_register_parsed[0],
+                            device_register_parsed[1], data_read,
+                            n_bytes)) < 0) {
+            printf("pi_i2c: read_i2c returned an error %d\n", ret);
+            printf("pi_i2c: error is not recoverable; exiting now\n");
+            return ret;
+        }
+
+        // Print out the read data in a nice table:
+        printf("pi_i2c: register values = [");
+        for (i = 0; i < n_bytes; i++) {
+            printf("0x%X, ", data_read[i]);
+        }
+        printf("\b\b]\n");
     }
 
     return 0;

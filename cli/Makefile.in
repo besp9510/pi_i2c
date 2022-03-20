@@ -99,14 +99,13 @@ $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 
 # Install executable:
 install:
-	@echo "Installing library to $(LIBDESTDIR)"
+	@echo "Installing executable to $(DESTDIR)"
 	@echo "cp $(TARGETDIR)/$(TARGET) $(DESTDIR)/$(TARGET)"
 	@cp $(TARGETDIR)/$(TARGET) $(DESTDIR)/$(TARGET)
 
 # Uninstall executable:
 uninstall:
-	@echo "Removing installed library at $(LIBDESTDIR)"
-	@echo "Removing installed header files at $(INCDESTDIR)"
+	@echo "Removing installed executable at $(DESTDIR)"
 	@echo "rm -rf $(DESTDIR)/$(TARGET)"
 	@rm -rf $(DESTDIR)/$(TARGET)
 

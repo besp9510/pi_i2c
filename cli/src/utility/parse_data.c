@@ -30,8 +30,8 @@
 // Include C POSIX libraries:
 #include <ctype.h>  // C compatible data types
 
-// Parse input string list of hex numbers into an integer array
-int parse_data(char *data_string, int *data_parsed) {
+// Parse input string list of hex numbers delimited by a comma into an int array
+int parse_data(char *data_string, unsigned int *data_parsed) {
     char* token_string;
     char* token_hex;
     char *base;
