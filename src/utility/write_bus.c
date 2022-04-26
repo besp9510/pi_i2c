@@ -56,7 +56,7 @@ int write_byte_to_bus(int byte) {
             gpio_set_mode(GPIO_INPUT, sda_gpio_pin);
         } else {
             gpio_set_mode(GPIO_OUTPUT, sda_gpio_pin);
-        };
+        }
 
         // Keep SCL cleared while SCL low period time elapses. Not waiting may
         // violate I2C timing requirements.

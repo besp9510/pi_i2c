@@ -400,6 +400,7 @@ int reset_i2c(void) {
             return ret;
         }
     }
+
     // Keep track of statistics for any caller interested in those
     // kind of numbers:
     statistics.num_bus_resets++;

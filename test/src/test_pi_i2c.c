@@ -42,7 +42,7 @@ void test_scan_bus_i2c(void) {
     if ((ret = scan_bus_i2c(i2c_address_book)) < 0) {
         printf("Error! scan_i2c() returned %d\n\n", ret);
         return;
-    };
+    }
 
     printf("i2c_scan() has returned %d\n", ret);
 
